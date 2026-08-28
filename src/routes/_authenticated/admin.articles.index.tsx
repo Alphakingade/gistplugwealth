@@ -1,0 +1,142 @@
+import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Trash2 } from "lucide-react";
+import { adminDeleteArticle, adminListArticles } from "@/lib/admin.functions";
+import { formatDate } from "@/lib/site";
+
+export const Route = createFileRoute("/_authenticated/admin/articles/")({
+  component: AdminArticles,
+});
+
+type Row = {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  featured: boolean;
+  trending: boolean;
+  popular: boolean;
+  updated_at: string;
+  category: { name: string } | null;
+};
+
+function AdminArticles() {
+  const list = useServerFn(adminListArticles);
+  const remove = useServerFn(adminDeleteArticle);
+  const queryClient = useQueryClient();
+  const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-articles"],
+    queryFn: () => list() as Promise<Row[]>,
+  });
+
+  const deletion = useMutation({
+    mutationFn: (id: string) => remove({ data: { id } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-articles"] }),
+  });
+
+  const rows = (data ?? []).filter((row) => filter === "all" || row.status === filter);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl">Articles</h1>
+        <Link
+          to="/admin/articles/$id"
+          params={{ id: "new" }}
+          className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground"
+        >
+          New article
+        </Link>
+      </div>
+
+      <div className="flex gap-2">
+        {(["all", "published", "draft"] as const).map((value) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setFilter(value)}
+            className={`h-9 rounded-md border px-4 text-sm font-semibold capitalize ${
+              filter === value
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-background"
+            }`}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-border bg-background">
+        <table className="w-full min-w-[640px] text-left text-sm">
+          <thead className="border-b border-border text-muted-foreground">
+            <tr>
+              <th className="p-4 font-semibold">Title</th>
+              <th className="p-4 font-semibold">Category</th>
+              <th className="p-4 font-semibold">Status</th>
+              <th className="p-4 font-semibold">Updated</th>
+              <th className="p-4" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td className="p-4">
+                  <Link
+                    to="/admin/articles/$id"
+                    params={{ id: row.id }}
+                    className="font-semibold hover:text-primary"
+                  >
+                    {row.title}
+                  </Link>
+                  <div className="mt-1 flex gap-2 text-xs text-muted-foreground">
+                    {row.featured ? <span>Featured</span> : null}
+                    {row.trending ? <span>Trending</span> : null}
+                    {row.popular ? <span>Popular</span> : null}
+                  </div>
+                </td>
+                <td className="p-4 text-muted-foreground">{row.category?.name ?? "—"}</td>
+                <td className="p-4">
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      row.status === "published"
+                        ? "bg-primary-soft text-primary"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {row.status}
+                  </span>
+                </td>
+                <td className="p-4 text-muted-foreground">{formatDate(row.updated_at)}</td>
+                <td className="p-4 text-right">
+                  <button
+                    type="button"
+                    aria-label={`Delete ${row.title}`}
+                    onClick={() => {
+                      if (confirm(`Delete “${row.title}”? This cannot be undone.`)) {
+                        deletion.mutate(row.id);
+                      }
+                    }}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-destructive hover:bg-muted"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {!isLoading && rows.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                  No articles found.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
