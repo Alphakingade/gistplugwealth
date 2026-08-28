@@ -328,3 +328,25 @@ export const adminUploadImage = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { url: `/api/public/media/${path}` };
   });
+
+export const adminListTaxonomy = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const [categories, tags] = await Promise.all([
+      context.supabase.from("categories").select("*").order("sort_order", { ascending: true }),
+      context.supabase.from("tags").select("*").order("name", { ascending: true }),
+    ]);
+    return { categories: categories.data ?? [], tags: tags.data ?? [] };
+  });
+
+export const adminWhoAmI = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await (
+      context.supabase as unknown as {
+        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: boolean | null }>;
+      }
+    ).rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    return { userId: context.userId, isAdmin: Boolean(data) };
+  });
