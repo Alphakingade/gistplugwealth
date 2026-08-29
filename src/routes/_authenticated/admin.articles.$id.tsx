@@ -108,8 +108,7 @@ function ArticleEditor() {
   const tags = taxonomyQuery.data?.tags ?? [];
 
   const saveMutation = useMutation({
-    mutationFn: (payload: Parameters<typeof adminSaveArticle>[0]["data"]) =>
-      save({ data: payload }),
+    mutationFn: (payload: Record<string, unknown>) => save({ data: payload as never }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
