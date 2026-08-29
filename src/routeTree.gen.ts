@@ -24,6 +24,9 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as ArticleSlugRouteImport } from './routes/article.$slug'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminInboxRouteImport } from './routes/_authenticated/admin.inbox'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
+import { Route as AuthenticatedAdminTaxonomyRouteImport } from './routes/_authenticated/admin.taxonomy'
 import { Route as AuthenticatedAdminArticlesIndexRouteImport } from './routes/_authenticated/admin.articles.index'
 import { Route as AuthenticatedAdminArticlesIdRouteImport } from './routes/_authenticated/admin.articles.$id'
 import { Route as ApiPublicMediaSplatRouteImport } from './routes/api/public/media.$'
@@ -102,6 +105,23 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminInboxRoute = AuthenticatedAdminInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminTaxonomyRoute =
+  AuthenticatedAdminTaxonomyRouteImport.update({
+    id: '/taxonomy',
+    path: '/taxonomy',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminArticlesIndexRoute =
   AuthenticatedAdminArticlesIndexRouteImport.update({
     id: '/articles/',
@@ -134,6 +154,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/article/$slug': typeof ArticleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/admin/inbox': typeof AuthenticatedAdminInboxRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/taxonomy': typeof AuthenticatedAdminTaxonomyRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/articles/$id': typeof AuthenticatedAdminArticlesIdRoute
   '/api/public/media/$': typeof ApiPublicMediaSplatRoute
@@ -152,6 +175,9 @@ export interface FileRoutesByTo {
   '/terms-of-use': typeof TermsOfUseRoute
   '/article/$slug': typeof ArticleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/admin/inbox': typeof AuthenticatedAdminInboxRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/taxonomy': typeof AuthenticatedAdminTaxonomyRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/articles/$id': typeof AuthenticatedAdminArticlesIdRoute
   '/api/public/media/$': typeof ApiPublicMediaSplatRoute
@@ -173,6 +199,9 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/article/$slug': typeof ArticleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/_authenticated/admin/inbox': typeof AuthenticatedAdminInboxRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/taxonomy': typeof AuthenticatedAdminTaxonomyRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/articles/$id': typeof AuthenticatedAdminArticlesIdRoute
   '/api/public/media/$': typeof ApiPublicMediaSplatRoute
@@ -194,6 +223,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/article/$slug'
     | '/category/$slug'
+    | '/admin/inbox'
+    | '/admin/settings'
+    | '/admin/taxonomy'
     | '/admin/'
     | '/admin/articles/$id'
     | '/api/public/media/$'
@@ -212,6 +244,9 @@ export interface FileRouteTypes {
     | '/terms-of-use'
     | '/article/$slug'
     | '/category/$slug'
+    | '/admin/inbox'
+    | '/admin/settings'
+    | '/admin/taxonomy'
     | '/admin'
     | '/admin/articles/$id'
     | '/api/public/media/$'
@@ -232,6 +267,9 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/article/$slug'
     | '/category/$slug'
+    | '/_authenticated/admin/inbox'
+    | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/taxonomy'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/articles/$id'
     | '/api/public/media/$'
@@ -362,6 +400,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/inbox': {
+      id: '/_authenticated/admin/inbox'
+      path: '/inbox'
+      fullPath: '/admin/inbox'
+      preLoaderRoute: typeof AuthenticatedAdminInboxRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/taxonomy': {
+      id: '/_authenticated/admin/taxonomy'
+      path: '/taxonomy'
+      fullPath: '/admin/taxonomy'
+      preLoaderRoute: typeof AuthenticatedAdminTaxonomyRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/articles/': {
       id: '/_authenticated/admin/articles/'
       path: '/articles'
@@ -387,12 +446,18 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminInboxRoute: typeof AuthenticatedAdminInboxRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminTaxonomyRoute: typeof AuthenticatedAdminTaxonomyRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminArticlesIdRoute: typeof AuthenticatedAdminArticlesIdRoute
   AuthenticatedAdminArticlesIndexRoute: typeof AuthenticatedAdminArticlesIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminInboxRoute: AuthenticatedAdminInboxRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedAdminTaxonomyRoute: AuthenticatedAdminTaxonomyRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminArticlesIdRoute: AuthenticatedAdminArticlesIdRoute,
   AuthenticatedAdminArticlesIndexRoute: AuthenticatedAdminArticlesIndexRoute,
