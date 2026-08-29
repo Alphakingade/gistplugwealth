@@ -25,6 +25,7 @@ import { Route as ArticleSlugRouteImport } from './routes/article.$slug'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminArticlesIndexRouteImport } from './routes/_authenticated/admin.articles.index'
+import { Route as AuthenticatedAdminArticlesIdRouteImport } from './routes/_authenticated/admin.articles.$id'
 import { Route as ApiPublicMediaSplatRouteImport } from './routes/api/public/media.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -107,6 +108,12 @@ const AuthenticatedAdminArticlesIndexRoute =
     path: '/articles/',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminArticlesIdRoute =
+  AuthenticatedAdminArticlesIdRouteImport.update({
+    id: '/articles/$id',
+    path: '/articles/$id',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const ApiPublicMediaSplatRoute = ApiPublicMediaSplatRouteImport.update({
   id: '/api/public/media/$',
   path: '/api/public/media/$',
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/article/$slug': typeof ArticleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/articles/$id': typeof AuthenticatedAdminArticlesIdRoute
   '/api/public/media/$': typeof ApiPublicMediaSplatRoute
   '/admin/articles/': typeof AuthenticatedAdminArticlesIndexRoute
 }
@@ -145,6 +153,7 @@ export interface FileRoutesByTo {
   '/article/$slug': typeof ArticleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/articles/$id': typeof AuthenticatedAdminArticlesIdRoute
   '/api/public/media/$': typeof ApiPublicMediaSplatRoute
   '/admin/articles': typeof AuthenticatedAdminArticlesIndexRoute
 }
@@ -165,6 +174,7 @@ export interface FileRoutesById {
   '/article/$slug': typeof ArticleSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/articles/$id': typeof AuthenticatedAdminArticlesIdRoute
   '/api/public/media/$': typeof ApiPublicMediaSplatRoute
   '/_authenticated/admin/articles/': typeof AuthenticatedAdminArticlesIndexRoute
 }
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/article/$slug'
     | '/category/$slug'
     | '/admin/'
+    | '/admin/articles/$id'
     | '/api/public/media/$'
     | '/admin/articles/'
   fileRoutesByTo: FileRoutesByTo
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/article/$slug'
     | '/category/$slug'
     | '/admin'
+    | '/admin/articles/$id'
     | '/api/public/media/$'
     | '/admin/articles'
   id:
@@ -221,6 +233,7 @@ export interface FileRouteTypes {
     | '/article/$slug'
     | '/category/$slug'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/articles/$id'
     | '/api/public/media/$'
     | '/_authenticated/admin/articles/'
   fileRoutesById: FileRoutesById
@@ -356,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminArticlesIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/articles/$id': {
+      id: '/_authenticated/admin/articles/$id'
+      path: '/articles/$id'
+      fullPath: '/admin/articles/$id'
+      preLoaderRoute: typeof AuthenticatedAdminArticlesIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/api/public/media/$': {
       id: '/api/public/media/$'
       path: '/api/public/media/$'
@@ -368,11 +388,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminArticlesIdRoute: typeof AuthenticatedAdminArticlesIdRoute
   AuthenticatedAdminArticlesIndexRoute: typeof AuthenticatedAdminArticlesIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminArticlesIdRoute: AuthenticatedAdminArticlesIdRoute,
   AuthenticatedAdminArticlesIndexRoute: AuthenticatedAdminArticlesIndexRoute,
 }
 
