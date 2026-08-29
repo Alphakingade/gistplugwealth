@@ -164,7 +164,7 @@ export const getArticle = createServerFn({ method: "GET" })
         .neq("id", article.id)
         .order("published_at", { ascending: false })
         .limit(3);
-      related = rel ?? [];
+      related = (rel ?? []) as unknown as RelatedRow[];
     }
 
     if (related.length === 0) {
@@ -175,7 +175,7 @@ export const getArticle = createServerFn({ method: "GET" })
         .neq("id", article.id)
         .order("published_at", { ascending: false })
         .limit(3);
-      related = rel ?? [];
+      related = (rel ?? []) as unknown as RelatedRow[];
     }
 
     return { article: { ...article, tags }, related };
