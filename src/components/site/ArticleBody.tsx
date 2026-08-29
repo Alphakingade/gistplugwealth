@@ -1,12 +1,38 @@
 import type { ReactNode } from "react";
+import { Lightbulb } from "lucide-react";
 
-/** Renders inline **bold**, *italic* and [links](url) safely as React nodes. */
+/**
+ * GistPlugWealth simple formatting — WhatsApp style.
+ *
+ *   *bold*  (or **bold**)      _italic_       ~strike~
+ *   `code`  ==highlight==      # Heading      ## Sub-heading
+ *   - bullet   1. numbered     > quote        --- divider
+ *   !! tip callout             https://link (auto)   [text](url)
+ *   image: paste an image URL on its own line
+ */
+
+const IMAGE_RE = /^(https?:\/\/\S+\.(?:png|jpe?g|gif|webp|avif)(?:\?\S*)?|\/api\/public\/media\/\S+)$/i;
+
 function inline(text: string, keyPrefix: string): ReactNode[] {
   const nodes: ReactNode[] = [];
-  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)\s]+\))/g;
+  const pattern =
+    /(\*\*[^*\n]+\*\*|\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~|==[^=\n]+==|`[^`\n]+`|\[[^\]]+\]\([^)\s]+\)|https?:\/\/[^\s)]+)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   let index = 0;
+
+  const link = (href: string, label: string, key: string) => {
+    const external = /^https?:\/\//.test(href);
+    return (
+      <a
+        key={key}
+        href={href}
+        {...(external ? { target: "_blank", rel: "noopener noreferrer nofollow sponsored" } : {})}
+      >
+        {label}
+      </a>
+    );
+  };
 
   while ((match = pattern.exec(text)) !== null) {
     if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
@@ -15,21 +41,22 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
 
     if (token.startsWith("**")) {
       nodes.push(<strong key={key}>{token.slice(2, -2)}</strong>);
+    } else if (token.startsWith("*")) {
+      nodes.push(<strong key={key}>{token.slice(1, -1)}</strong>);
+    } else if (token.startsWith("_")) {
+      nodes.push(<em key={key}>{token.slice(1, -1)}</em>);
+    } else if (token.startsWith("~")) {
+      nodes.push(<del key={key}>{token.slice(1, -1)}</del>);
+    } else if (token.startsWith("==")) {
+      nodes.push(<mark key={key}>{token.slice(2, -2)}</mark>);
+    } else if (token.startsWith("`")) {
+      nodes.push(<code key={key}>{token.slice(1, -1)}</code>);
     } else if (token.startsWith("[")) {
       const label = token.slice(1, token.indexOf("]"));
       const href = token.slice(token.indexOf("(") + 1, -1);
-      const external = /^https?:\/\//.test(href);
-      nodes.push(
-        <a
-          key={key}
-          href={href}
-          {...(external ? { target: "_blank", rel: "noopener noreferrer nofollow sponsored" } : {})}
-        >
-          {label}
-        </a>,
-      );
+      nodes.push(link(href, label, key));
     } else {
-      nodes.push(<em key={key}>{token.slice(1, -1)}</em>);
+      nodes.push(link(token, token.replace(/^https?:\/\//, ""), key));
     }
     lastIndex = pattern.lastIndex;
   }
@@ -38,7 +65,6 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
   return nodes;
 }
 
-/** Minimal, safe markdown renderer for article content. */
 export function ArticleBody({ content }: { content: string }) {
   const lines = content.replace(/\r\n/g, "\n").split("\n");
   const blocks: ReactNode[] = [];
@@ -88,45 +114,76 @@ export function ArticleBody({ content }: { content: string }) {
       continue;
     }
 
-    if (line.startsWith("### ")) {
+    // Images: bare image URL on its own line
+    if (IMAGE_RE.test(line)) {
       flushAll();
-      blocks.push(<h3 key={`h-${key++}`}>{inline(line.slice(4), `h${key}`)}</h3>);
+      blocks.push(
+        <img key={`img-${key++}`} src={line} alt="" loading="lazy" className="rounded-xl" />,
+      );
       continue;
     }
-    if (line.startsWith("## ")) {
+
+    // Tip callout: !! text
+    if (line.startsWith("!!")) {
       flushAll();
-      blocks.push(<h2 key={`h-${key++}`}>{inline(line.slice(3), `h${key}`)}</h2>);
+      blocks.push(
+        <div key={`c-${key++}`} className="callout">
+          <Lightbulb className="mt-1 h-5 w-5 shrink-0 text-emerald" aria-hidden="true" />
+          <p className="m-0">{inline(line.replace(/^!!\s*/, ""), `c${key}`)}</p>
+        </div>,
+      );
       continue;
     }
-    if (line === "---") {
+
+    const heading = /^(#{1,3})\s+(.*)$/.exec(line);
+    if (heading) {
+      flushAll();
+      const level = heading[1].length;
+      const body = inline(heading[2], `h${key}`);
+      blocks.push(
+        level === 1 ? (
+          <h2 key={`h-${key++}`}>{body}</h2>
+        ) : level === 2 ? (
+          <h2 key={`h-${key++}`}>{body}</h2>
+        ) : (
+          <h3 key={`h-${key++}`}>{body}</h3>
+        ),
+      );
+      continue;
+    }
+
+    if (/^-{3,}$/.test(line)) {
       flushAll();
       blocks.push(<hr key={`hr-${key++}`} />);
       continue;
     }
+
     if (line.startsWith("> ")) {
       flushParagraph();
       flushList();
       quote.push(line.slice(2));
       continue;
     }
-    if (/^[-*]\s+/.test(line)) {
+
+    if (/^[-•]\s+/.test(line)) {
       flushParagraph();
       flushQuote();
       if (!list || list.ordered) {
         flushList();
         list = { ordered: false, items: [] };
       }
-      list.items.push(line.replace(/^[-*]\s+/, ""));
+      list.items.push(line.replace(/^[-•]\s+/, ""));
       continue;
     }
-    if (/^\d+\.\s+/.test(line)) {
+
+    if (/^\d+[.)]\s+/.test(line)) {
       flushParagraph();
       flushQuote();
       if (!list || !list.ordered) {
         flushList();
         list = { ordered: true, items: [] };
       }
-      list.items.push(line.replace(/^\d+\.\s+/, ""));
+      list.items.push(line.replace(/^\d+[.)]\s+/, ""));
       continue;
     }
 
