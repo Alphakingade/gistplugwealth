@@ -1,6 +1,6 @@
 import { MessageCircle } from "lucide-react";
 
-export function WhatsAppCta({ url }: { url?: string }) {
+export function WhatsAppCta({ url }: { url?: string | undefined }) {
   const configured = Boolean(url && url.trim());
 
   return (

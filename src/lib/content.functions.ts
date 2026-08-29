@@ -142,7 +142,19 @@ export const getArticle = createServerFn({ method: "GET" })
       .map((row: { tags: { id: string; name: string; slug: string } | null }) => row.tags)
       .filter((tag): tag is { id: string; name: string; slug: string } => Boolean(tag));
 
-    let related: unknown[] = [];
+    type RelatedRow = {
+      id: string;
+      title: string;
+      slug: string;
+      excerpt: string | null;
+      featured_image: string | null;
+      author_name: string;
+      read_minutes: number;
+      published_at: string | null;
+      created_at: string;
+      category: { id: string; name: string; slug: string } | null;
+    };
+    let related: RelatedRow[] = [];
     if (article.category_id) {
       const { data: rel } = await supabase
         .from("articles")
@@ -152,7 +164,7 @@ export const getArticle = createServerFn({ method: "GET" })
         .neq("id", article.id)
         .order("published_at", { ascending: false })
         .limit(3);
-      related = rel ?? [];
+      related = (rel ?? []) as unknown as RelatedRow[];
     }
 
     if (related.length === 0) {
@@ -163,7 +175,7 @@ export const getArticle = createServerFn({ method: "GET" })
         .neq("id", article.id)
         .order("published_at", { ascending: false })
         .limit(3);
-      related = rel ?? [];
+      related = (rel ?? []) as unknown as RelatedRow[];
     }
 
     return { article: { ...article, tags }, related };
