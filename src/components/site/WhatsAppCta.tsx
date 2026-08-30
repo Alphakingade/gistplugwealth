@@ -4,7 +4,7 @@ export function WhatsAppCta({ url }: { url?: string | undefined }) {
   const configured = Boolean(url && url.trim());
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10">
+    <section className="surface hover-lift relative overflow-hidden p-6 sm:p-10">
       <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-xl">
           <span className="eyebrow text-emerald">Community</span>
@@ -20,13 +20,13 @@ export function WhatsAppCta({ url }: { url?: string | undefined }) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-12 shrink-0 items-center gap-2 rounded-md bg-emerald px-6 font-semibold text-emerald-foreground transition-opacity hover:opacity-90"
+            className="btn btn-lg btn-emerald pulse-ring shrink-0"
           >
             <MessageCircle className="h-5 w-5" aria-hidden="true" />
             Join WhatsApp
           </a>
         ) : (
-          <div className="shrink-0 rounded-md border border-dashed border-border px-5 py-3 text-sm text-muted-foreground">
+          <div className="shrink-0 rounded-xl border border-dashed border-border px-5 py-3 text-sm text-muted-foreground">
             Add your WhatsApp community link in admin settings to activate this button.
           </div>
         )}
