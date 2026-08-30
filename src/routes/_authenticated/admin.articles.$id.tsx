@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { Bold, Eye, Heading2, ImagePlus, Italic, Link2, List, ListOrdered, Loader2, Quote, Sparkles } from "lucide-react";
+import { ArticleBody } from "@/components/site/ArticleBody";
+import { FormatGuide } from "@/components/site/FormatGuide";
 import {
   adminGetArticle,
   adminListTaxonomy,
@@ -51,8 +53,18 @@ const EMPTY: FormState = {
   tagIds: [],
 };
 
-const inputClass =
-  "mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const inputClass = "field mt-1.5 text-sm";
+
+const TOOLS = [
+  { label: "Bold", icon: Bold, wrap: ["*", "*"], sample: "bold text" },
+  { label: "Italic", icon: Italic, wrap: ["_", "_"], sample: "italic text" },
+  { label: "Highlight", icon: Sparkles, wrap: ["==", "=="], sample: "key point" },
+  { label: "Heading", icon: Heading2, wrap: ["\n# ", "\n"], sample: "Section heading" },
+  { label: "Bullet list", icon: List, wrap: ["\n- ", ""], sample: "First point" },
+  { label: "Numbered list", icon: ListOrdered, wrap: ["\n1. ", ""], sample: "First step" },
+  { label: "Quote", icon: Quote, wrap: ["\n> ", "\n"], sample: "Quoted line" },
+  { label: "Link", icon: Link2, wrap: ["[", "](https://)"], sample: "link text" },
+] as const;
 
 function ArticleEditor() {
   const { id } = Route.useParams();
@@ -67,6 +79,8 @@ function ArticleEditor() {
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [slugTouched, setSlugTouched] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const articleQuery = useQuery({
@@ -149,12 +163,25 @@ function ArticleEditor() {
     if (file) uploadMutation.mutate(file);
   }
 
+  function applyTool(before: string, after: string, sample: string) {
+    const node = contentRef.current;
+    if (!node) return;
+    const start = node.selectionStart;
+    const end = node.selectionEnd;
+    const value = node.value;
+    const selected = value.slice(start, end) || sample;
+    const next = `${value.slice(0, start)}${before}${selected}${after}${value.slice(end)}`;
+    setForm((prev) => ({ ...prev, content: next }));
+    requestAnimationFrame(() => {
+      node.focus();
+      const caret = start + before.length;
+      node.setSelectionRange(caret, caret + selected.length);
+    });
+  }
+
   const canSave = form.title.trim().length >= 3 && form.slug.trim().length >= 3;
 
-  const previewText = useMemo(
-    () => form.content.split("\n").slice(0, 30).join("\n"),
-    [form.content],
-  );
+  const previewText = useMemo(() => form.content.trim(), [form.content]);
 
   function onSave(nextStatus: "draft" | "published") {
     setError(null);
@@ -180,7 +207,7 @@ function ArticleEditor() {
 
   return (
     <div className="grid gap-8 lg:grid-cols-[2fr,1fr]">
-      <section className="space-y-6 rounded-xl border border-border bg-background p-6">
+      <section className="surface space-y-6 p-6">
         <h1 className="text-2xl">{isNew ? "New article" : "Edit article"}</h1>
 
         <div>
@@ -236,21 +263,59 @@ function ArticleEditor() {
         </div>
 
         <div>
-          <label htmlFor="content" className="text-sm font-semibold">
-            Content
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label htmlFor="content" className="text-sm font-semibold">
+              Content
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowPreview((value) => !value)}
+              className="btn btn-sm btn-quiet"
+            >
+              <Eye className="h-4 w-4" aria-hidden="true" />
+              {showPreview ? "Hide preview" : "Preview"}
+            </button>
+          </div>
+
+          <div className="mt-2 flex flex-wrap gap-1.5 rounded-t-xl border border-b-0 border-input bg-muted/50 p-2">
+            {TOOLS.map((tool) => (
+              <button
+                key={tool.label}
+                type="button"
+                title={tool.label}
+                aria-label={tool.label}
+                onClick={() => applyTool(tool.wrap[0], tool.wrap[1], tool.sample)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-border hover:bg-background hover:text-primary"
+              >
+                <tool.icon className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ))}
+          </div>
           <textarea
             id="content"
-            rows={18}
+            ref={contentRef}
+            rows={20}
             value={form.content}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, content: event.target.value }))
             }
-            className={`${inputClass} font-mono text-xs`}
+            className="w-full rounded-b-xl rounded-t-none border border-input bg-background p-4 font-mono text-[0.8rem] leading-relaxed outline-none focus:border-emerald"
           />
-          <p className="mt-1 text-xs text-muted-foreground">
-            Supports **bold**, *italic*, ## headings, lists, &gt; quotes and [links](https://…).
+          <p className="mt-2 text-xs text-muted-foreground">
+            Write it like a WhatsApp message: <code>*bold*</code>, <code>_italic_</code>, one point
+            per line.
           </p>
+          <div className="mt-3">
+            <FormatGuide />
+          </div>
+          {showPreview ? (
+            <div className="mt-4 rounded-xl border border-border bg-card p-5">
+              <p className="eyebrow text-emerald">Live preview</p>
+              <div className="mt-3">
+                <ArticleBody content={previewText} />
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {error ? (
@@ -264,7 +329,7 @@ function ArticleEditor() {
             type="button"
             disabled={!canSave || saveMutation.isPending}
             onClick={() => onSave("draft")}
-            className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 text-sm font-semibold disabled:opacity-60"
+            className="btn btn-quiet"
           >
             {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Save draft
@@ -273,7 +338,7 @@ function ArticleEditor() {
             type="button"
             disabled={!canSave || saveMutation.isPending}
             onClick={() => onSave("published")}
-            className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            className="btn btn-primary"
           >
             {form.status === "published" ? "Update & keep published" : "Publish"}
           </button>
@@ -281,7 +346,7 @@ function ArticleEditor() {
       </section>
 
       <aside className="space-y-6">
-        <section className="rounded-xl border border-border bg-background p-5">
+        <section className="surface p-5">
           <h2 className="text-lg">Featured image</h2>
           {form.featured_image ? (
             <img
@@ -294,7 +359,7 @@ function ArticleEditor() {
               No image — a category fallback will be used
             </div>
           )}
-          <label className="mt-3 inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold hover:bg-muted">
+          <label className="btn btn-sm btn-quiet mt-3 cursor-pointer">
             {uploadMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -310,7 +375,7 @@ function ArticleEditor() {
           </label>
         </section>
 
-        <section className="space-y-4 rounded-xl border border-border bg-background p-5">
+        <section className="surface space-y-4 p-5">
           <h2 className="text-lg">Organisation</h2>
           <div>
             <label htmlFor="category" className="text-sm font-semibold">
@@ -350,11 +415,7 @@ function ArticleEditor() {
                           : [...prev.tagIds, tag.id],
                       }))
                     }
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                      active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border"
-                    }`}
+                    className={`chip ${active ? "chip-active" : "hover:border-emerald"}`}
                   >
                     {tag.name}
                   </button>
@@ -414,7 +475,7 @@ function ArticleEditor() {
           </div>
         </section>
 
-        <section className="space-y-4 rounded-xl border border-border bg-background p-5">
+        <section className="surface space-y-4 p-5">
           <h2 className="text-lg">SEO</h2>
           <div>
             <label htmlFor="seo_title" className="text-sm font-semibold">
@@ -446,7 +507,7 @@ function ArticleEditor() {
         </section>
 
         {previewText ? (
-          <section className="rounded-xl border border-border bg-background p-5">
+          <section className="surface p-5">
             <h2 className="text-lg">Preview (first lines)</h2>
             <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{previewText}</p>
           </section>

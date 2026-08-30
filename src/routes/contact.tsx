@@ -85,7 +85,7 @@ function ContactPage() {
           <form
             onSubmit={onSubmit}
             noValidate
-            className="rounded-xl border border-border bg-card p-6 shadow-card sm:p-8"
+            className="surface p-6 sm:p-8"
           >
             <div className="grid gap-5 sm:grid-cols-2">
               {FIELDS.map((field) => (
@@ -103,7 +103,7 @@ function ContactPage() {
                       setValues((prev) => ({ ...prev, [field.name]: event.target.value }))
                     }
                     aria-invalid={Boolean(errors[field.name])}
-                    className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="field mt-1.5"
                   />
                   {errors[field.name] ? (
                     <p className="mt-1 text-sm text-destructive">{errors[field.name]}</p>
@@ -135,7 +135,7 @@ function ContactPage() {
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="mt-6 inline-flex h-12 items-center gap-2 rounded-md bg-primary px-7 font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-70"
+              className="btn btn-lg btn-primary mt-6"
             >
               {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Send message
@@ -152,7 +152,7 @@ function ContactPage() {
           </form>
 
           <aside className="space-y-6">
-            <div className="rounded-xl border border-border bg-card p-6 shadow-card">
+            <div className="surface p-6">
               <h2 className="font-heading text-lg font-semibold">What to reach out about</h2>
               <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                 <li>Advertising and sponsored placements</li>

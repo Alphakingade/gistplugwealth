@@ -28,22 +28,22 @@ export function SiteFooter() {
           <h2 className="eyebrow text-gold">Quick Links</h2>
           <ul className="mt-4 space-y-2.5 text-sm">
             <li>
-              <Link to="/" className="opacity-85 hover:opacity-100 hover:underline">
+              <Link to="/" className="inline-block opacity-85 transition-all hover:translate-x-1 hover:text-gold hover:opacity-100">
                 Home
               </Link>
             </li>
             <li>
-              <Link to="/blog" className="opacity-85 hover:opacity-100 hover:underline">
+              <Link to="/blog" className="inline-block opacity-85 transition-all hover:translate-x-1 hover:text-gold hover:opacity-100">
                 Blog
               </Link>
             </li>
             <li>
-              <Link to="/about" className="opacity-85 hover:opacity-100 hover:underline">
+              <Link to="/about" className="inline-block opacity-85 transition-all hover:translate-x-1 hover:text-gold hover:opacity-100">
                 About
               </Link>
             </li>
             <li>
-              <Link to="/contact" className="opacity-85 hover:opacity-100 hover:underline">
+              <Link to="/contact" className="inline-block opacity-85 transition-all hover:translate-x-1 hover:text-gold hover:opacity-100">
                 Contact
               </Link>
             </li>
@@ -58,7 +58,7 @@ export function SiteFooter() {
                 <Link
                   to="/category/$slug"
                   params={{ slug: category.slug }}
-                  className="opacity-85 hover:opacity-100 hover:underline"
+                  className="inline-block opacity-85 transition-all hover:translate-x-1 hover:text-gold hover:opacity-100"
                 >
                   {category.name}
                 </Link>
@@ -71,17 +71,17 @@ export function SiteFooter() {
           <h2 className="eyebrow text-gold">Legal</h2>
           <ul className="mt-4 space-y-2.5 text-sm">
             <li>
-              <Link to="/privacy-policy" className="opacity-85 hover:opacity-100 hover:underline">
+              <Link to="/privacy-policy" className="inline-block opacity-85 transition-all hover:translate-x-1 hover:text-gold hover:opacity-100">
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link to="/terms-of-use" className="opacity-85 hover:opacity-100 hover:underline">
+              <Link to="/terms-of-use" className="inline-block opacity-85 transition-all hover:translate-x-1 hover:text-gold hover:opacity-100">
                 Terms of Use
               </Link>
             </li>
             <li>
-              <Link to="/disclaimer" className="opacity-85 hover:opacity-100 hover:underline">
+              <Link to="/disclaimer" className="inline-block opacity-85 transition-all hover:translate-x-1 hover:text-gold hover:opacity-100">
                 Disclaimer
               </Link>
             </li>
@@ -97,7 +97,7 @@ export function SiteFooter() {
                       href={settings[item.key]}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="opacity-85 hover:opacity-100 hover:underline"
+                      className="inline-block opacity-85 transition-all hover:translate-x-1 hover:text-gold hover:opacity-100"
                     >
                       {item.label}
                     </a>

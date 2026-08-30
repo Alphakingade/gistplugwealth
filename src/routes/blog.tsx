@@ -72,7 +72,7 @@ function BlogPage() {
               type="button"
               onClick={() => setPage((value) => Math.max(0, value - 1))}
               disabled={page === 0}
-              className="h-10 rounded-md border border-border px-4 font-semibold disabled:opacity-50"
+              className="btn btn-sm btn-quiet"
             >
               Previous
             </button>
@@ -83,7 +83,7 @@ function BlogPage() {
               type="button"
               onClick={() => setPage((value) => Math.min(pages - 1, value + 1))}
               disabled={page >= pages - 1}
-              className="h-10 rounded-md border border-border px-4 font-semibold disabled:opacity-50"
+              className="btn btn-sm btn-quiet"
             >
               Next
             </button>

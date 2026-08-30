@@ -21,7 +21,7 @@ export function AdSlot({
   return (
     <aside
       aria-label={label}
-      className={`flex ${heights[size]} w-full items-center justify-center rounded-lg border border-dashed border-border bg-muted/60 ${className}`}
+      className={`flex ${heights[size]} w-full items-center justify-center rounded-2xl border border-dashed border-border bg-muted/50 ${className}`}
     >
       <span className="eyebrow text-muted-foreground">{label}</span>
     </aside>

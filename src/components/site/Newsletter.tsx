@@ -44,8 +44,8 @@ export function Newsletter({ compact = false }: { compact?: boolean }) {
     <section
       className={
         compact
-          ? "rounded-xl border border-border bg-primary-soft p-6"
-          : "rounded-2xl bg-primary px-6 py-12 text-primary-foreground sm:px-12"
+          ? "rounded-2xl border border-border bg-primary-soft p-6"
+          : "relative overflow-hidden rounded-3xl bg-primary px-6 py-14 text-primary-foreground shadow-lift sm:px-12"
       }
       aria-labelledby="newsletter-heading"
     >
@@ -83,7 +83,7 @@ export function Newsletter({ compact = false }: { compact?: boolean }) {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@example.com"
-              className="h-12 w-full rounded-md border border-input bg-background pl-9 pr-3 text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="field h-12 rounded-full py-0 pl-9 pr-4 text-foreground"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? "newsletter-error" : undefined}
             />
@@ -91,7 +91,7 @@ export function Newsletter({ compact = false }: { compact?: boolean }) {
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-emerald px-6 font-semibold text-emerald-foreground transition-opacity hover:opacity-90 disabled:opacity-70"
+            className="btn btn-lg btn-emerald"
           >
             {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Subscribe

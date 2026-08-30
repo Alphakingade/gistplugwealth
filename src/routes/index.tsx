@@ -70,14 +70,14 @@ function Index() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/blog"
-                className="inline-flex h-12 items-center gap-2 rounded-md bg-emerald px-6 font-semibold text-emerald-foreground transition-opacity hover:opacity-90"
+                className="btn btn-lg btn-gold"
               >
                 Start reading <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <Link
                 to="/category/$slug"
                 params={{ slug: "making-money-in-nigeria" }}
-                className="inline-flex h-12 items-center rounded-md border border-primary-foreground/30 px-6 font-semibold transition-colors hover:bg-primary-foreground/10"
+                className="btn btn-lg border border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10"
               >
                 Ways to earn
               </Link>
@@ -100,7 +100,7 @@ function Index() {
               </div>
               <Link
                 to="/blog"
-                className="hidden shrink-0 items-center gap-1 font-semibold text-primary hover:text-emerald sm:inline-flex"
+                className="link-arrow hidden shrink-0 sm:inline-flex"
               >
                 All articles <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -136,7 +136,7 @@ function Index() {
                 key={category.id}
                 to="/category/$slug"
                 params={{ slug: category.slug }}
-                className="group flex items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-card transition-shadow hover:shadow-lift"
+                className="group surface hover-lift flex items-start gap-4 p-5"
               >
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
                   <CategoryIcon name={category.icon ?? category.name} className="h-5 w-5" />
@@ -170,7 +170,7 @@ function Index() {
             <div className="mt-8">
               <Link
                 to="/blog"
-                className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 font-semibold text-primary hover:bg-muted"
+                className="btn btn-outline"
               >
                 View all articles <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -181,7 +181,7 @@ function Index() {
             {trending.length > 0 ? (
               <section
                 aria-labelledby="trending-heading"
-                className="rounded-xl border border-border bg-card p-6 shadow-card"
+                className="surface p-6"
               >
                 <span className="eyebrow text-emerald">Trending</span>
                 <h2 id="trending-heading" className="mt-1 text-xl">

@@ -53,7 +53,7 @@ function CategoryNotFound() {
         </p>
         <Link
           to="/blog"
-          className="mt-6 inline-flex h-11 items-center rounded-md bg-primary px-6 font-semibold text-primary-foreground"
+          className="btn btn-primary mt-6"
         >
           Go to blog
         </Link>

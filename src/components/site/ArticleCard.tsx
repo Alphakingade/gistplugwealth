@@ -15,11 +15,11 @@ export function ArticleCard({
 
   if (size === "compact") {
     return (
-      <article className="group flex gap-4">
+      <article className="group flex gap-4 rounded-xl p-1 transition-colors hover:bg-muted/60">
         <Link
           to="/article/$slug"
           params={{ slug: article.slug }}
-          className="shrink-0 overflow-hidden rounded-md"
+          className="shrink-0 overflow-hidden rounded-xl"
         >
           <img
             src={cover}
@@ -27,7 +27,7 @@ export function ArticleCard({
             width={160}
             height={120}
             loading="lazy"
-            className="h-20 w-24 object-cover transition-transform duration-300 group-hover:scale-105 sm:w-28"
+            className="h-20 w-24 object-cover transition-transform duration-500 group-hover:scale-110 sm:w-28"
           />
         </Link>
         <div className="min-w-0">
@@ -44,7 +44,7 @@ export function ArticleCard({
             <Link
               to="/article/$slug"
               params={{ slug: article.slug }}
-              className="hover:text-primary"
+              className="transition-colors hover:text-primary"
             >
               {article.title}
             </Link>
@@ -61,7 +61,7 @@ export function ArticleCard({
 
   return (
     <article
-      className={`group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card transition-shadow duration-300 hover:shadow-lift ${
+      className={`group surface hover-lift flex h-full flex-col overflow-hidden ${
         isLarge ? "lg:flex-row" : ""
       }`}
     >
@@ -90,7 +90,7 @@ export function ArticleCard({
             <Link
               to="/category/$slug"
               params={{ slug: article.category.slug }}
-              className="eyebrow rounded-full bg-primary-soft px-2.5 py-1 text-primary hover:bg-accent"
+              className="chip chip-brand"
             >
               {article.category.name}
             </Link>
@@ -99,7 +99,11 @@ export function ArticleCard({
         </div>
 
         <h3 className={`mt-3 ${isLarge ? "text-2xl sm:text-3xl" : "text-xl"}`}>
-          <Link to="/article/$slug" params={{ slug: article.slug }} className="hover:text-primary">
+          <Link
+            to="/article/$slug"
+            params={{ slug: article.slug }}
+            className="bg-gradient-to-r from-emerald to-emerald bg-[length:0%_2px] bg-left-bottom bg-no-repeat transition-[background-size,color] duration-300 hover:bg-[length:100%_2px] hover:text-primary"
+          >
             {article.title}
           </Link>
         </h3>
@@ -119,7 +123,7 @@ export function ArticleCard({
           <Link
             to="/article/$slug"
             params={{ slug: article.slug }}
-            className="inline-flex items-center gap-1 font-semibold text-primary hover:gap-2 hover:text-emerald"
+            className="link-arrow"
           >
             Read article <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>

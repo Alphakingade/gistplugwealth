@@ -47,7 +47,7 @@ function AdminArticles() {
         <Link
           to="/admin/articles/$id"
           params={{ id: "new" }}
-          className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          className="btn btn-sm btn-primary"
         >
           New article
         </Link>
@@ -120,7 +120,7 @@ function AdminArticles() {
                         deletion.mutate(row.id);
                       }
                     }}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-destructive hover:bg-muted"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-destructive transition-all hover:-translate-y-0.5 hover:border-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

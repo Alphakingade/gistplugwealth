@@ -34,7 +34,7 @@ function AdminDashboard() {
         <Link
           to="/admin/articles/$id"
           params={{ id: "new" }}
-          className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          className="btn btn-sm btn-primary"
         >
           New article
         </Link>
@@ -42,7 +42,7 @@ function AdminDashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {CARDS.map((card) => (
-          <div key={card.key} className="rounded-xl border border-border bg-background p-5">
+          <div key={card.key} className="surface p-5">
             <p className="eyebrow text-muted-foreground">{card.label}</p>
             <p className="mt-2 font-heading text-3xl font-bold text-primary">
               {isLoading ? "—" : (data?.stats[card.key] ?? 0)}
@@ -51,7 +51,7 @@ function AdminDashboard() {
         ))}
       </div>
 
-      <section className="rounded-xl border border-border bg-background p-6">
+      <section className="surface p-6">
         <h2 className="text-lg">Recently updated</h2>
         <ul className="mt-4 divide-y divide-border">
           {(data?.recent ?? []).map(
