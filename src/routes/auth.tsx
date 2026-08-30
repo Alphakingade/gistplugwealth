@@ -86,7 +86,7 @@ function AuthPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-primary-soft px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lift">
+      <div className="surface animate-rise w-full max-w-md p-8 shadow-lift">
         <Logo />
         <h1 className="mt-6 text-2xl">{mode === "signin" ? "Admin sign in" : "Create account"}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -104,7 +104,7 @@ function AuthPage() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="field mt-1.5"
             />
           </div>
           <div>
@@ -117,14 +117,14 @@ function AuthPage() {
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="field mt-1.5"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary font-semibold text-primary-foreground disabled:opacity-70"
+            className="btn btn-primary btn-block"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {mode === "signin" ? "Sign in" : "Sign up"}
@@ -134,7 +134,7 @@ function AuthPage() {
         <button
           type="button"
           onClick={signInWithGoogle}
-          className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-md border border-border font-semibold hover:bg-muted"
+          className="btn btn-quiet btn-block mt-3"
         >
           Continue with Google
         </button>

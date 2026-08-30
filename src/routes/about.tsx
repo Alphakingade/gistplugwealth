@@ -95,7 +95,7 @@ function AboutPage() {
             {VALUES.map((value) => (
               <div
                 key={value.title}
-                className="rounded-xl border border-border bg-card p-5 shadow-card"
+                className="surface hover-lift p-5"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
                   <value.icon className="h-5 w-5" aria-hidden="true" />
@@ -106,7 +106,7 @@ function AboutPage() {
             ))}
             <Link
               to="/contact"
-              className="inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-5 font-semibold text-primary-foreground"
+              className="btn btn-primary btn-block"
             >
               Work with us
             </Link>
