@@ -350,3 +350,68 @@ export const adminWhoAmI = createServerFn({ method: "GET" })
     ).rpc("has_role", { _user_id: context.userId, _role: "admin" });
     return { userId: context.userId, isAdmin: Boolean(data) };
   });
+
+export const adminListAdmins = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { data, error } = await (
+      context.supabase as unknown as {
+        rpc: (fn: string) => Promise<{
+          data:
+            | {
+                user_id: string;
+                email: string;
+                granted_at: string;
+                last_sign_in_at: string | null;
+              }[]
+            | null;
+          error: { message: string } | null;
+        }>;
+      }
+    ).rpc("list_admin_users");
+    if (error) throw new Error(error.message);
+    return { admins: data ?? [], me: context.userId };
+  });
+
+export const adminGrantAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ email: z.string().trim().email().max(255) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { data: result, error } = await (
+      context.supabase as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{
+          data: { ok: boolean; message: string } | null;
+          error: { message: string } | null;
+        }>;
+      }
+    ).rpc("grant_admin_by_email", { _email: data.email });
+    if (error) throw new Error(error.message);
+    return result ?? { ok: false, message: "Unexpected error" };
+  });
+
+export const adminRevokeAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => idInput.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { data: result, error } = await (
+      context.supabase as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{
+          data: { ok: boolean; message: string } | null;
+          error: { message: string } | null;
+        }>;
+      }
+    ).rpc("revoke_admin", { _user_id: data.id });
+    if (error) throw new Error(error.message);
+    return result ?? { ok: false, message: "Unexpected error" };
+  });
