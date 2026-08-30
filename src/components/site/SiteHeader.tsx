@@ -33,7 +33,7 @@ function SearchForm({ onDone, id }: { onDone?: () => void; id: string }) {
         value={value}
         onChange={(event) => setValue(event.target.value)}
         placeholder="Search articles"
-        className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="field h-10 rounded-full py-0 pl-9 pr-3 text-sm"
       />
     </form>
   );
@@ -61,18 +61,19 @@ export function SiteHeader() {
   const trending = home?.trending?.[0];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/85 shadow-[0_1px_0_0_var(--color-border)] backdrop-blur-md">
       <div className="hidden border-b border-border bg-primary text-primary-foreground lg:block">
+        <div className="h-0.5 w-full bg-gradient-to-r from-emerald via-gold to-emerald" />
         <div className="container-page flex h-9 items-center justify-between text-xs">
           <span className="opacity-80">{today}</span>
           {trending ? (
             <p className="flex min-w-0 items-center gap-2">
-              <TrendingUp className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
+              <TrendingUp className="h-3.5 w-3.5 animate-pulse text-gold" aria-hidden="true" />
               <span className="eyebrow text-gold">Trending</span>
               <Link
                 to="/article/$slug"
                 params={{ slug: trending.slug }}
-                className="truncate hover:underline"
+                className="truncate underline-offset-4 transition-colors hover:text-gold hover:underline"
               >
                 {trending.title}
               </Link>
@@ -106,7 +107,7 @@ export function SiteHeader() {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border lg:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border transition-transform duration-200 active:scale-95 lg:hidden"
           aria-expanded={open}
           aria-controls="mobile-nav"
           aria-label={open ? "Close menu" : "Open menu"}
@@ -123,7 +124,7 @@ export function SiteHeader() {
                 key={item.label}
                 to="/category/$slug"
                 params={{ slug: item.slug }}
-                className="whitespace-nowrap text-foreground/80 transition-colors hover:text-primary"
+                className="nav-link whitespace-nowrap text-sm font-semibold text-foreground/75 transition-colors hover:text-primary"
                 activeProps={{ className: "text-primary" }}
               >
                 {item.label}
@@ -133,7 +134,7 @@ export function SiteHeader() {
                 key={item.label}
                 to={item.to}
                 activeOptions={{ exact: item.to === "/" }}
-                className="whitespace-nowrap text-foreground/80 transition-colors hover:text-primary"
+                className="nav-link whitespace-nowrap text-sm font-semibold text-foreground/75 transition-colors hover:text-primary"
                 activeProps={{ className: "text-primary" }}
               >
                 {item.label}
@@ -144,7 +145,7 @@ export function SiteHeader() {
       </nav>
 
       {open ? (
-        <div id="mobile-nav" className="border-t border-border bg-background lg:hidden">
+        <div id="mobile-nav" className="animate-rise border-t border-border bg-background lg:hidden">
           <div className="container-page space-y-4 py-4">
             <SearchForm id="search-mobile" onDone={() => setOpen(false)} />
             <nav aria-label="Mobile" className="grid gap-1">
@@ -155,7 +156,7 @@ export function SiteHeader() {
                     to="/category/$slug"
                     params={{ slug: item.slug }}
                     onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-2.5 font-semibold text-foreground/85 hover:bg-muted"
+                    className="rounded-lg px-3 py-2.5 font-semibold text-foreground/85 transition-all hover:translate-x-1 hover:bg-primary-soft hover:text-primary"
                   >
                     {item.label}
                   </Link>
@@ -164,7 +165,7 @@ export function SiteHeader() {
                     key={item.label}
                     to={item.to}
                     onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-2.5 font-semibold text-foreground/85 hover:bg-muted"
+                    className="rounded-lg px-3 py-2.5 font-semibold text-foreground/85 transition-all hover:translate-x-1 hover:bg-primary-soft hover:text-primary"
                   >
                     {item.label}
                   </Link>
