@@ -28,7 +28,7 @@ type CategoryRow = {
 type TagRow = { id: string; name: string; slug: string };
 
 const inputClass =
-  "mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "field mt-1.5 text-sm";
 
 function TaxonomyPage() {
   const load = useServerFn(adminListTaxonomy);
@@ -181,7 +181,7 @@ function TaxonomyPage() {
             <button
               type="submit"
               disabled={categoryMutation.isPending}
-              className="h-10 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+              className="btn btn-sm btn-primary"
             >
               {categoryForm.id ? "Update category" : "Add category"}
             </button>
@@ -228,7 +228,7 @@ function TaxonomyPage() {
                     if (confirm(`Delete category “${category.name}”?`))
                       deleteCategoryMutation.mutate(category.id);
                   }}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-destructive hover:bg-muted"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-destructive transition-all hover:-translate-y-0.5 hover:border-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -257,7 +257,7 @@ function TaxonomyPage() {
             <button
               type="submit"
               disabled={tagMutation.isPending}
-              className="h-10 shrink-0 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+              className="btn btn-sm btn-primary shrink-0"
             >
               {tagForm.id ? "Update" : "Add"}
             </button>

@@ -80,7 +80,7 @@ function SettingsPage() {
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground disabled:opacity-70"
+          className="btn btn-primary"
         >
           {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Save settings

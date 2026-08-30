@@ -47,7 +47,7 @@ function InboxPage() {
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <section className="rounded-xl border border-border bg-background p-6">
+      <section className="surface p-6">
         <h1 className="text-2xl">Contact messages</h1>
         <ul className="mt-4 space-y-4">
           {(messagesQuery.data ?? []).map((message) => (
@@ -85,7 +85,7 @@ function InboxPage() {
         </ul>
       </section>
 
-      <section className="rounded-xl border border-border bg-background p-6">
+      <section className="surface p-6">
         <h2 className="text-2xl">Newsletter subscribers</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {subscribersQuery.data?.length ?? 0} subscribers
