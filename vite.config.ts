@@ -13,6 +13,17 @@ const isVercel = Boolean(process.env["VERCEL"]) || process.env["NITRO_PRESET"] =
 
 export default defineConfig({
   ...(isVercel ? { nitro: { preset: "vercel" } } : {}),
+  vite: {
+    build: {
+      rollupOptions: {
+        // Vite 8/Rolldown can drop live declarations while tree-shaking large
+        // re-export graphs, producing a successful build that crashes only in
+        // the deployed browser bundle. Keep declarations intact until the
+        // upstream bundler fix is available.
+        treeshake: false,
+      },
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
