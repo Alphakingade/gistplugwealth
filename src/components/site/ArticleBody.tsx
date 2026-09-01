@@ -138,8 +138,8 @@ export function ArticleBody({ content }: { content: string }) {
     const heading = /^(#{1,3})\s+(.*)$/.exec(line);
     if (heading) {
       flushAll();
-      const level = heading[1].length;
-      const body = inline(heading[2], `h${key}`);
+      const level = (heading[1] ?? "#").length;
+      const body = inline(heading[2] ?? "", `h${key}`);
       blocks.push(
         level === 1 ? (
           <h2 key={`h-${key++}`}>{body}</h2>
