@@ -124,7 +124,7 @@ function ContactPage() {
                     setValues((prev) => ({ ...prev, message: event.target.value }))
                   }
                   aria-invalid={Boolean(errors["message"])}
-                  className="mt-1.5 w-full rounded-md border border-input bg-background p-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="field mt-1.5"
                 />
                 {errors["message"] ? (
                   <p className="mt-1 text-sm text-destructive">{errors["message"]}</p>
