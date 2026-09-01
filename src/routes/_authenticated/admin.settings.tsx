@@ -72,7 +72,7 @@ function SettingsPage() {
               onChange={(event) =>
                 setValues((prev) => ({ ...prev, [field.key]: event.target.value }))
               }
-              className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="field mt-1.5 h-11 text-sm"
             />
           </div>
         ))}
