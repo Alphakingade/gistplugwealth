@@ -1,12 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "vite build",
-  "installCommand": "npm install",
-  "outputDirectory": ".vercel/output",
+  "buildCommand": "bun run build",
+  "installCommand": "bun install --frozen-lockfile",
+  "env": {
+    "SUPABASE_URL": "https://gtuzuftnbltuwpdolzpw.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ouzQ9mhnzLG-hpTkwH3Z6Q_93pfqR7K",
+    "SUPABASE_PROJECT_ID": "gtuzuftnbltuwpdolzpw"
+  },
   "build": {
     "env": {
-      "NITRO_PRESET": "vercel"
+      "NITRO_PRESET": "vercel",
+      "SUPABASE_URL": "https://gtuzuftnbltuwpdolzpw.supabase.co",
+      "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ouzQ9mhnzLG-hpTkwH3Z6Q_93pfqR7K",
+      "SUPABASE_PROJECT_ID": "gtuzuftnbltuwpdolzpw",
+      "VITE_SUPABASE_URL": "https://gtuzuftnbltuwpdolzpw.supabase.co",
+      "VITE_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ouzQ9mhnzLG-hpTkwH3Z6Q_93pfqR7K",
+      "VITE_SUPABASE_PROJECT_ID": "gtuzuftnbltuwpdolzpw"
     }
   }
 }
