@@ -15,6 +15,12 @@ Vercel reads `vercel.json` in the repo root, which already sets:
 
 ## 2. Environment variables
 
+The backend URL and publishable key are baked into the build from the repo's
+`.env`, and the server falls back to those values when the matching
+`SUPABASE_*` variables are missing, so sign in / sign up work on Vercel without
+extra setup. Setting them explicitly still overrides the defaults.
+
+
 Add these in Vercel → Project → Settings → Environment Variables
 (Production **and** Preview). Values are the ones in your project's `.env`:
 
