@@ -78,10 +78,25 @@ function AuthPage() {
 
   async function signInWithGoogle() {
     setError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    // Lovable-managed Google sign-in only works on Lovable-hosted origins.
+    // On any other host (e.g. a custom/Vercel domain) fall back to the
+    // backend's own Google provider so the flow still completes.
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (!result.error) return;
+    } catch {
+      /* fall through to the direct provider */
+    }
+
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth` },
     });
-    if (result.error) setError("Google sign-in failed. Please try again.");
+    if (oauthError) {
+      setError(`Google sign-in failed: ${oauthError.message}`);
+    }
   }
 
   return (
