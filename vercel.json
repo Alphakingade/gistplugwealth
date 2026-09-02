@@ -3,7 +3,6 @@
   "framework": null,
   "buildCommand": "vite build",
   "installCommand": "npm install",
-  "outputDirectory": ".vercel/output",
   "build": {
     "env": {
       "NITRO_PRESET": "vercel"
