@@ -7,9 +7,11 @@ import type { ArticleCard as ArticleCardType } from "@/lib/types";
 export function ArticleCard({
   article,
   size = "default",
+  priority = false,
 }: {
   article: ArticleCardType;
   size?: "default" | "large" | "compact";
+  priority?: boolean;
 }) {
   const cover = coverFor(article);
 
@@ -26,7 +28,8 @@ export function ArticleCard({
             alt={article.title}
             width={160}
             height={120}
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+          fetchpriority={priority ? "high" : "auto"}
             className="h-20 w-24 object-cover transition-transform duration-500 group-hover:scale-110 sm:w-28"
           />
         </Link>
@@ -77,7 +80,8 @@ export function ArticleCard({
           alt=""
           width={1200}
           height={800}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchpriority={priority ? "high" : "auto"}
           className={`w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] ${
             isLarge ? "h-56 lg:h-full" : "h-48"
           }`}

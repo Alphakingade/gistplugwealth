@@ -139,6 +139,8 @@ function ArticlePage() {
             <div className="min-w-0">
               <img
                 src={cover}
+                loading="eager"
+                fetchpriority="high"
                 alt={article.title}
                 width={1200}
                 height={800}
