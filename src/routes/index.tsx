@@ -52,7 +52,6 @@ function Index() {
           src={heroImage}
           loading="eager"
           fetchpriority="high"
-          loading="eager"
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover opacity-25"
         />
