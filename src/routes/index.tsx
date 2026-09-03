@@ -50,7 +50,9 @@ function Index() {
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
         <img
           src={heroImage}
-          alt=""
+          loading="eager"
+          fetchpriority="high"
+          loading="eager"
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover opacity-25"
         />
@@ -108,7 +110,7 @@ function Index() {
 
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
-                <ArticleCard article={lead} size="large" />
+                <ArticleCard article={lead} size="large" priority />
               </div>
               <div className="space-y-6">
                 {secondary.length > 0
