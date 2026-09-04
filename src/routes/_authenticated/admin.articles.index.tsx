@@ -2,8 +2,12 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Trash2 } from "lucide-react";
-import { adminDeleteArticle, adminListArticles } from "@/lib/admin.functions";
+import { ExternalLink, Trash2 } from "lucide-react";
+import {
+  adminDeleteArticle,
+  adminListArticles,
+  adminSetArticleStatus,
+} from "@/lib/admin.functions";
 import { formatDate } from "@/lib/site";
 
 export const Route = createFileRoute("/_authenticated/admin/articles/")({
@@ -25,8 +29,10 @@ type Row = {
 function AdminArticles() {
   const list = useServerFn(adminListArticles);
   const remove = useServerFn(adminDeleteArticle);
+  const setStatus = useServerFn(adminSetArticleStatus);
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
+  const [search, setSearch] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-articles"],
@@ -38,7 +44,17 @@ function AdminArticles() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-articles"] }),
   });
 
-  const rows = (data ?? []).filter((row) => filter === "all" || row.status === filter);
+  const statusChange = useMutation({
+    mutationFn: (vars: { id: string; status: "draft" | "published" }) =>
+      setStatus({ data: vars }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-articles"] }),
+  });
+
+  const term = search.trim().toLowerCase();
+  const rows = (data ?? [])
+    .filter((row) => filter === "all" || row.status === filter)
+    .filter((row) => !term || row.title.toLowerCase().includes(term));
+
 
   return (
     <div className="space-y-6">
