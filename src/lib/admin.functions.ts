@@ -185,7 +185,55 @@ export const adminSaveArticle = createServerFn({ method: "POST" })
     return { id: articleId! };
   });
 
+export const adminSetArticleStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ id: z.string().uuid(), status: z.enum(["draft", "published"]) })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const supabase = context.supabase;
+    const patch: Record<string, unknown> = { status: data.status };
+    if (data.status === "published") {
+      const { data: existing } = await supabase
+        .from("articles")
+        .select("published_at")
+        .eq("id", data.id)
+        .maybeSingle();
+      patch['published_at'] = existing?.published_at ?? new Date().toISOString();
+    }
+    const { error } = await supabase.from("articles").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminReorderCategories = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        order: z
+          .array(z.object({ id: z.string().uuid(), sort_order: z.number().int().min(0).max(999) }))
+          .max(60),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    for (const row of data.order) {
+      const { error } = await context.supabase
+        .from("categories")
+        .update({ sort_order: row.sort_order })
+        .eq("id", row.id);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
 export const adminDeleteArticle = createServerFn({ method: "POST" })
+
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => idInput.parse(input))
   .handler(async ({ data, context }) => {
