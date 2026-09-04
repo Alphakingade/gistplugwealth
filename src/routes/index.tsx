@@ -26,6 +26,7 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "preload", as: "image", href: heroImage, fetchpriority: "high" }],
   }),
   loader: ({ context }) => {
     void context.queryClient.ensureQueryData(homeQuery());
@@ -111,7 +112,7 @@ function Index() {
 
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
-                <ArticleCard article={lead} size="large" />
+                <ArticleCard article={lead} size="large" priority />
               </div>
               <div className="space-y-6">
                 {secondary.length > 0
