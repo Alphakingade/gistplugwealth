@@ -52,6 +52,9 @@ function Index() {
           src={heroImage}
           alt=""
           aria-hidden="true"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover opacity-25"
         />
         <div className="relative container-page py-16 sm:py-24">

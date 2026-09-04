@@ -142,6 +142,9 @@ function ArticlePage() {
                 alt={article.title}
                 width={1200}
                 height={800}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
                 className="aspect-[3/2] w-full rounded-xl object-cover shadow-card"
               />
 
