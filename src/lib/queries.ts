@@ -7,17 +7,25 @@ import {
   listArticles,
 } from "./content.functions";
 
+// Published content changes rarely — keep it warm in memory so repeat
+// navigation is instant instead of refetching on every route change.
+const FRESH = 5 * 60 * 1000;
+const KEEP = 30 * 60 * 1000;
+
 export const siteQuery = () =>
   queryOptions({
     queryKey: ["site-data"],
     queryFn: () => getSiteData(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: FRESH,
+    gcTime: KEEP,
   });
 
 export const homeQuery = () =>
   queryOptions({
     queryKey: ["home-data"],
     queryFn: () => getHomeData(),
+    staleTime: FRESH,
+    gcTime: KEEP,
   });
 
 export const articlesQuery = (params: {
@@ -37,16 +45,22 @@ export const articlesQuery = (params: {
           offset: params.offset ?? 0,
         },
       }),
+    staleTime: FRESH,
+    gcTime: KEEP,
   });
 
 export const articleQuery = (slug: string) =>
   queryOptions({
     queryKey: ["article", slug],
     queryFn: () => getArticle({ data: { slug } }),
+    staleTime: FRESH,
+    gcTime: KEEP,
   });
 
 export const categoryQuery = (slug: string) =>
   queryOptions({
     queryKey: ["category", slug],
     queryFn: () => getCategory({ data: { slug } }),
+    staleTime: FRESH,
+    gcTime: KEEP,
   });

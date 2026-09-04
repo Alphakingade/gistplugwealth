@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import logo from "@/assets/gistplugwealth-logo.png.asset.json";
+import logo from "@/assets/gistplugwealth-logo.webp";
 
 export function Logo({
   className = "",
@@ -13,7 +13,10 @@ export function Logo({
   return (
     <Link to="/" className={`inline-flex flex-col gap-1 ${className}`} aria-label="GistPlugWealth home">
       <img
-        src={logo.url}
+        src={logo}
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
         alt="GistPlugWealth — Inform. Inspire. Increase."
         width={480}
         height={150}
