@@ -69,7 +69,7 @@ function AdminArticles() {
         </Link>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {(["all", "published", "draft"] as const).map((value) => (
           <button
             key={value}
@@ -84,7 +84,15 @@ function AdminArticles() {
             {value}
           </button>
         ))}
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search titles…"
+          aria-label="Search articles"
+          className="field h-9 w-full max-w-xs text-sm sm:ml-auto sm:w-64"
+        />
       </div>
+
 
       <div className="overflow-x-auto rounded-xl border border-border bg-background">
         <table className="w-full min-w-[640px] text-left text-sm">
