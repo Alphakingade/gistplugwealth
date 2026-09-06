@@ -240,6 +240,25 @@ function TaxonomyPage() {
                     /{category.slug}
                   </span>
                 </button>
+                <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  aria-label={`Move ${category.name} up`}
+                  disabled={index === 0 || reorderMutation.isPending}
+                  onClick={() => move(index, -1)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-emerald hover:text-primary disabled:opacity-40"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Move ${category.name} down`}
+                  disabled={index === categories.length - 1 || reorderMutation.isPending}
+                  onClick={() => move(index, 1)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-emerald hover:text-primary disabled:opacity-40"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
                 <button
                   type="button"
                   aria-label={`Delete ${category.name}`}
