@@ -135,7 +135,32 @@ function AdminArticles() {
                   </span>
                 </td>
                 <td className="p-4 text-muted-foreground">{formatDate(row.updated_at)}</td>
-                <td className="p-4 text-right">
+                <td className="p-4">
+                  <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    disabled={statusChange.isPending}
+                    onClick={() =>
+                      statusChange.mutate({
+                        id: row.id,
+                        status: row.status === "published" ? "draft" : "published",
+                      })
+                    }
+                    className="btn btn-sm btn-quiet"
+                  >
+                    {row.status === "published" ? "Unpublish" : "Publish"}
+                  </button>
+                  {row.status === "published" ? (
+                    <a
+                      href={`/article/${row.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`View ${row.title} on the live site`}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-emerald hover:text-primary"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  ) : null}
                   <button
                     type="button"
                     aria-label={`Delete ${row.title}`}
