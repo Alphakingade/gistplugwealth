@@ -219,7 +219,7 @@ function TaxonomyPage() {
 
           <ul className="divide-y divide-border">
             {isLoading ? <li className="py-3 text-sm text-muted-foreground">Loading…</li> : null}
-            {categories.map((category) => (
+            {categories.map((category, index) => (
               <li key={category.id} className="flex items-center justify-between gap-3 py-3">
                 <button
                   type="button"
