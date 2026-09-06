@@ -88,6 +88,23 @@ function TaxonomyPage() {
     onSuccess: invalidate,
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: (order: { id: string; sort_order: number }[]) => reorder({ data: { order } }),
+    onSuccess: invalidate,
+    onError: () => setError("Could not change the order. Try again."),
+  });
+
+  function move(index: number, direction: -1 | 1) {
+    const next = [...categories];
+    const target = index + direction;
+    if (target < 0 || target >= next.length) return;
+    const a = next[index]!;
+    const b = next[target]!;
+    next[index] = b;
+    next[target] = a;
+    reorderMutation.mutate(next.map((category, i) => ({ id: category.id, sort_order: i })));
+  }
+
   function submitCategory(event: FormEvent) {
     event.preventDefault();
     setError(null);
