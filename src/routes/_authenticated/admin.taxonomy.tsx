@@ -37,6 +37,7 @@ function TaxonomyPage() {
   const deleteCategory = useServerFn(adminDeleteCategory);
   const saveTag = useServerFn(adminSaveTag);
   const deleteTag = useServerFn(adminDeleteTag);
+  const reorder = useServerFn(adminReorderCategories);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({ queryKey: ["admin-taxonomy"], queryFn: () => load() });
