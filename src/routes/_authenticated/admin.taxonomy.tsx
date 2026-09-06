@@ -2,11 +2,12 @@ import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import {
   adminDeleteCategory,
   adminDeleteTag,
   adminListTaxonomy,
+  adminReorderCategories,
   adminSaveCategory,
   adminSaveTag,
 } from "@/lib/admin.functions";
@@ -36,6 +37,7 @@ function TaxonomyPage() {
   const deleteCategory = useServerFn(adminDeleteCategory);
   const saveTag = useServerFn(adminSaveTag);
   const deleteTag = useServerFn(adminDeleteTag);
+  const reorder = useServerFn(adminReorderCategories);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({ queryKey: ["admin-taxonomy"], queryFn: () => load() });
@@ -86,6 +88,23 @@ function TaxonomyPage() {
     mutationFn: (id: string) => deleteTag({ data: { id } }),
     onSuccess: invalidate,
   });
+
+  const reorderMutation = useMutation({
+    mutationFn: (order: { id: string; sort_order: number }[]) => reorder({ data: { order } }),
+    onSuccess: invalidate,
+    onError: () => setError("Could not change the order. Try again."),
+  });
+
+  function move(index: number, direction: -1 | 1) {
+    const next = [...categories];
+    const target = index + direction;
+    if (target < 0 || target >= next.length) return;
+    const a = next[index]!;
+    const b = next[target]!;
+    next[index] = b;
+    next[target] = a;
+    reorderMutation.mutate(next.map((category, i) => ({ id: category.id, sort_order: i })));
+  }
 
   function submitCategory(event: FormEvent) {
     event.preventDefault();
@@ -200,7 +219,7 @@ function TaxonomyPage() {
 
           <ul className="divide-y divide-border">
             {isLoading ? <li className="py-3 text-sm text-muted-foreground">Loading…</li> : null}
-            {categories.map((category) => (
+            {categories.map((category, index) => (
               <li key={category.id} className="flex items-center justify-between gap-3 py-3">
                 <button
                   type="button"
@@ -221,6 +240,25 @@ function TaxonomyPage() {
                     /{category.slug}
                   </span>
                 </button>
+                <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  aria-label={`Move ${category.name} up`}
+                  disabled={index === 0 || reorderMutation.isPending}
+                  onClick={() => move(index, -1)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-emerald hover:text-primary disabled:opacity-40"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Move ${category.name} down`}
+                  disabled={index === categories.length - 1 || reorderMutation.isPending}
+                  onClick={() => move(index, 1)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-emerald hover:text-primary disabled:opacity-40"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
                 <button
                   type="button"
                   aria-label={`Delete ${category.name}`}
@@ -232,6 +270,7 @@ function TaxonomyPage() {
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
+                </div>
               </li>
             ))}
           </ul>

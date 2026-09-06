@@ -342,6 +342,30 @@ function ArticleEditor() {
           >
             {form.status === "published" ? "Update & keep published" : "Publish"}
           </button>
+          {!isNew && form.status === "published" ? (
+            <>
+              <button
+                type="button"
+                disabled={saveMutation.isPending}
+                onClick={() => {
+                  if (confirm("Unpublish this article? It will disappear from the public site."))
+                    onSave("draft");
+                }}
+                className="btn btn-quiet"
+              >
+                Unpublish
+              </button>
+              <a
+                href={`/article/${form.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-quiet"
+              >
+                <Eye className="h-4 w-4" aria-hidden="true" />
+                View live
+              </a>
+            </>
+          ) : null}
         </div>
       </section>
 

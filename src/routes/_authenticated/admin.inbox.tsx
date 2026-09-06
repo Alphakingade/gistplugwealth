@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Download } from "lucide-react";
 import {
   adminListMessages,
   adminListSubscribers,
@@ -23,6 +24,18 @@ type Message = {
 };
 
 type Subscriber = { id: string; email: string; status: string; created_at: string };
+
+function exportSubscribers(rows: Subscriber[]) {
+  const csv = ["email,status,joined"]
+    .concat(rows.map((row) => `${row.email},${row.status},${row.created_at}`))
+    .join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "gistplugwealth-subscribers.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 function InboxPage() {
   const listMessages = useServerFn(adminListMessages);
@@ -86,7 +99,18 @@ function InboxPage() {
       </section>
 
       <section className="surface p-6">
-        <h2 className="text-2xl">Newsletter subscribers</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-2xl">Newsletter subscribers</h2>
+          <button
+            type="button"
+            disabled={(subscribersQuery.data ?? []).length === 0}
+            onClick={() => exportSubscribers(subscribersQuery.data ?? [])}
+            className="btn btn-sm btn-quiet"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            Export emails
+          </button>
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {subscribersQuery.data?.length ?? 0} subscribers
         </p>
