@@ -195,14 +195,16 @@ export const adminSetArticleStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const supabase = context.supabase;
-    const patch: Record<string, unknown> = { status: data.status };
+    const patch: { status: "draft" | "published"; published_at?: string } = {
+      status: data.status,
+    };
     if (data.status === "published") {
       const { data: existing } = await supabase
         .from("articles")
         .select("published_at")
         .eq("id", data.id)
         .maybeSingle();
-      patch['published_at'] = existing?.published_at ?? new Date().toISOString();
+      patch.published_at = existing?.published_at ?? new Date().toISOString();
     }
     const { error } = await supabase.from("articles").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
