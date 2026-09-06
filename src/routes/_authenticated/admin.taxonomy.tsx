@@ -2,11 +2,12 @@ import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import {
   adminDeleteCategory,
   adminDeleteTag,
   adminListTaxonomy,
+  adminReorderCategories,
   adminSaveCategory,
   adminSaveTag,
 } from "@/lib/admin.functions";
