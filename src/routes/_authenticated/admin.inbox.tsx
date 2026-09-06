@@ -25,6 +25,18 @@ type Message = {
 
 type Subscriber = { id: string; email: string; status: string; created_at: string };
 
+function exportSubscribers(rows: Subscriber[]) {
+  const csv = ["email,status,joined"]
+    .concat(rows.map((row) => `${row.email},${row.status},${row.created_at}`))
+    .join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "gistplugwealth-subscribers.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function InboxPage() {
   const listMessages = useServerFn(adminListMessages);
   const listSubscribers = useServerFn(adminListSubscribers);
