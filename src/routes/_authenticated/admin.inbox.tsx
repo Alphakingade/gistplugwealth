@@ -86,7 +86,18 @@ function InboxPage() {
       </section>
 
       <section className="surface p-6">
-        <h2 className="text-2xl">Newsletter subscribers</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-2xl">Newsletter subscribers</h2>
+          <button
+            type="button"
+            disabled={(subscribersQuery.data ?? []).length === 0}
+            onClick={() => exportSubscribers(subscribersQuery.data ?? [])}
+            className="btn btn-sm btn-quiet"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            Export emails
+          </button>
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {subscribersQuery.data?.length ?? 0} subscribers
         </p>
