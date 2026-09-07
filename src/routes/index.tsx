@@ -28,10 +28,13 @@ export const Route = createFileRoute("/")({
     ],
     links: [{ rel: "preload", as: "image", href: heroImage, fetchpriority: "high" }],
   }),
-  loader: ({ context }) => {
-    void context.queryClient.ensureQueryData(homeQuery());
-    void context.queryClient.ensureQueryData(siteQuery());
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(homeQuery()),
+      context.queryClient.ensureQueryData(siteQuery()),
+    ]);
   },
+
   component: Index,
 });
 
