@@ -1,9 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Search as SearchIcon } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ArticleCard } from "@/components/site/ArticleCard";
 import { articlesQuery } from "@/lib/queries";
 import type { ArticleCard as ArticleCardType } from "@/lib/types";
+
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>) => ({
