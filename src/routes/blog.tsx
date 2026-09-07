@@ -24,9 +24,10 @@ export const Route = createFileRoute("/blog")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  loader: ({ context }) => {
-    void context.queryClient.ensureQueryData(articlesQuery({ limit: PAGE_SIZE, offset: 0 }));
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(articlesQuery({ limit: PAGE_SIZE, offset: 0 }));
   },
+
   component: BlogPage,
 });
 

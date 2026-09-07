@@ -15,9 +15,10 @@ export const Route = createFileRoute("/category/$slug")({
       categoryQuery(params.slug),
     )) as Category | null;
     if (!category) throw notFound();
-    void context.queryClient.ensureQueryData(
+    await context.queryClient.ensureQueryData(
       articlesQuery({ categorySlug: params.slug, limit: 12 }),
     );
+
     return { category };
   },
   head: ({ loaderData }) => {
