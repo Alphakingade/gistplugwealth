@@ -11,11 +11,13 @@ const STATIC_PATHS = [
   "/disclaimer",
 ];
 
+const BASE_URL = "https://gistplugwealth-demo1.lovable.app";
+
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const origin = new URL(request.url).origin;
+      GET: async () => {
+        const origin = BASE_URL;
         const { articles, categories } = await listAllPublishedSlugs();
 
         const urls = [
