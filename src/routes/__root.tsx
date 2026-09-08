@@ -107,6 +107,46 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://gistplugwealth-demo1.lovable.app/#organization",
+              name: "GistPlugWealth",
+              url: "https://gistplugwealth-demo1.lovable.app",
+              slogan: "Inform. Inspire. Increase.",
+              description:
+                "Nigerian digital finance and opportunity publication covering saving money, side hustles, apps, online business and making money in Nigeria.",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://gistplugwealth-demo1.lovable.app/favicon.png",
+              },
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://gistplugwealth-demo1.lovable.app/#website",
+              name: "GistPlugWealth",
+              url: "https://gistplugwealth-demo1.lovable.app",
+              inLanguage: "en-NG",
+              publisher: { "@id": "https://gistplugwealth-demo1.lovable.app/#organization" },
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate:
+                    "https://gistplugwealth-demo1.lovable.app/search?q={search_term_string}",
+                },
+                "query-input": "required name=search_term_string",
+              },
+            },
+          ],
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
