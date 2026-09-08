@@ -20,7 +20,7 @@ export const Route = createFileRoute("/article/$slug")({
     if (!result) throw notFound();
     return result;
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, params }) => {
     if (!loaderData) {
       return { meta: [{ title: "Article not found" }, { name: "robots", content: "noindex" }] };
     }
@@ -29,6 +29,8 @@ export const Route = createFileRoute("/article/$slug")({
     const description =
       article.seo_description ?? article.excerpt ?? `${article.title} — a ${SITE.name} guide.`;
     const image = article.featured_image?.startsWith("http") ? article.featured_image : null;
+    const url = `${SITE.publicUrl}/article/${params.slug}`;
+    const published = article.published_at ?? article.created_at;
 
     return {
       meta: [
@@ -37,6 +39,10 @@ export const Route = createFileRoute("/article/$slug")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "article" },
+        { property: "og:url", content: url },
+        { property: "article:published_time", content: published },
+        { property: "article:author", content: article.author_name },
+        ...(article.category ? [{ property: "article:section", content: article.category.name }] : []),
         { name: "twitter:card", content: "summary_large_image" },
         ...(image
           ? [
@@ -45,8 +51,63 @@ export const Route = createFileRoute("/article/$slug")({
             ]
           : []),
       ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "Article",
+                mainEntityOfPage: { "@type": "WebPage", "@id": url },
+                headline: article.title,
+                description: article.excerpt ?? description,
+                datePublished: published,
+                dateModified: article.updated_at ?? published,
+                inLanguage: "en-NG",
+                author: { "@type": "Person", name: article.author_name },
+                publisher: {
+                  "@type": "Organization",
+                  name: SITE.name,
+                  url: SITE.publicUrl,
+                  logo: {
+                    "@type": "ImageObject",
+                    url: `${SITE.publicUrl}/favicon.png`,
+                  },
+                },
+                ...(article.category ? { articleSection: article.category.name } : {}),
+                ...(image ? { image: [image] } : {}),
+              },
+              {
+                "@type": "BreadcrumbList",
+                itemListElement: [
+                  { "@type": "ListItem", position: 1, name: "Home", item: SITE.publicUrl },
+                  ...(article.category
+                    ? [
+                        {
+                          "@type": "ListItem",
+                          position: 2,
+                          name: article.category.name,
+                          item: `${SITE.publicUrl}/category/${article.category.slug}`,
+                        },
+                      ]
+                    : []),
+                  {
+                    "@type": "ListItem",
+                    position: article.category ? 3 : 2,
+                    name: article.title,
+                    item: url,
+                  },
+                ],
+              },
+            ],
+          }),
+        },
+      ],
     };
   },
+
   notFoundComponent: ArticleNotFound,
   component: ArticlePage,
 });
@@ -75,17 +136,8 @@ function ArticlePage() {
   const cover = coverFor(article);
   const published = article.published_at ?? article.created_at;
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: article.title,
-    description: article.excerpt ?? undefined,
-    datePublished: published,
-    dateModified: article.updated_at ?? published,
-    author: { "@type": "Person", name: article.author_name },
-    publisher: { "@type": "Organization", name: SITE.name },
-    articleSection: article.category?.name,
-  };
+
+
 
   return (
     <SiteLayout>
@@ -203,7 +255,7 @@ function ArticlePage() {
         </div>
       </article>
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      
     </SiteLayout>
   );
 }
