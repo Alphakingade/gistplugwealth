@@ -136,17 +136,8 @@ function ArticlePage() {
   const cover = coverFor(article);
   const published = article.published_at ?? article.created_at;
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: article.title,
-    description: article.excerpt ?? undefined,
-    datePublished: published,
-    dateModified: article.updated_at ?? published,
-    author: { "@type": "Person", name: article.author_name },
-    publisher: { "@type": "Organization", name: SITE.name },
-    articleSection: article.category?.name,
-  };
+
+
 
   return (
     <SiteLayout>
