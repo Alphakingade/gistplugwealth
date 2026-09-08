@@ -255,7 +255,7 @@ function ArticlePage() {
         </div>
       </article>
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      
     </SiteLayout>
   );
 }
