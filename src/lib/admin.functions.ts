@@ -1,6 +1,18 @@
-import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+/**
+ * Admin data layer.
+ *
+ * Plain async functions running in the browser. Every call first confirms the
+ * signed-in account holds the `admin` role (via the `has_role` database
+ * function); row level security enforces the same rule server-side, so a
+ * tampered client still cannot write.
+ */
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { publicImageUrl } from "./media";
+
+/** Loosely-typed handle: the admin surface writes many partial shapes. */
+const db = supabase as unknown as SupabaseClient;
 
 const articleInput = z.object({
   id: z.string().uuid().optional(),
@@ -54,414 +66,336 @@ const tagInput = z.object({
 
 const idInput = z.object({ id: z.string().uuid() });
 
-async function assertAdmin(context: { supabase: unknown; userId: string }) {
-  const supabase = context.supabase as {
-    rpc: (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ data: boolean | null; error: unknown }>;
-  };
-  const { data } = await supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (!data) throw new Error("You do not have administrator access.");
+async function currentUserId() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) throw new Error("Please sign in again.");
+  return data.user.id;
 }
 
-export const getAdminOverview = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
-    const supabase = context.supabase;
+async function isAdmin(userId: string) {
+  const { data } = await db.rpc("has_role", { _user_id: userId, _role: "admin" });
+  return Boolean(data);
+}
 
-    const countOf = async (
-      table: "articles" | "categories" | "tags" | "newsletter_subscribers" | "contact_messages",
-      apply?: (q: ReturnType<typeof supabase.from>) => unknown,
-    ) => {
-      let query = supabase.from(table).select("id", { count: "exact", head: true });
-      if (apply) query = apply(query as never) as typeof query;
-      const { count } = await query;
-      return count ?? 0;
-    };
+/** Resolves to the signed-in admin's id, or throws. */
+async function requireAdmin() {
+  const userId = await currentUserId();
+  if (!(await isAdmin(userId))) throw new Error("You do not have administrator access.");
+  return userId;
+}
 
-    const [total, published, drafts, categories, tags, subscribers, messages] = await Promise.all([
-      countOf("articles"),
-      countOf("articles", (q) => (q as never as typeof q).eq("status", "published")),
-      countOf("articles", (q) => (q as never as typeof q).eq("status", "draft")),
-      countOf("categories"),
-      countOf("tags"),
-      countOf("newsletter_subscribers"),
-      countOf("contact_messages"),
-    ]);
+export async function getAdminOverview() {
+  await requireAdmin();
 
-    const { data: recent } = await supabase
-      .from("articles")
-      .select("id,title,slug,status,updated_at")
-      .order("updated_at", { ascending: false })
-      .limit(5);
+  const countOf = async (
+    table: "articles" | "categories" | "tags" | "newsletter_subscribers" | "contact_messages",
+    status?: "draft" | "published",
+  ) => {
+    let query = db.from(table).select("id", { count: "exact", head: true });
+    if (status) query = query.eq("status", status);
+    const { count } = await query;
+    return count ?? 0;
+  };
 
-    return {
-      stats: { total, published, drafts, categories, tags, subscribers, messages },
-      recent: recent ?? [],
-    };
-  });
+  const [total, published, drafts, categories, tags, subscribers, messages] = await Promise.all([
+    countOf("articles"),
+    countOf("articles", "published"),
+    countOf("articles", "draft"),
+    countOf("categories"),
+    countOf("tags"),
+    countOf("newsletter_subscribers"),
+    countOf("contact_messages"),
+  ]);
 
-export const adminListArticles = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
-    const { data, error } = await context.supabase
-      .from("articles")
-      .select(
-        "id,title,slug,status,featured,popular,trending,updated_at,published_at,category:categories(id,name,slug)",
-      )
-      .order("updated_at", { ascending: false })
-      .limit(300);
+  const { data: recent } = await db
+    .from("articles")
+    .select("id,title,slug,status,updated_at")
+    .order("updated_at", { ascending: false })
+    .limit(5);
+
+  return {
+    stats: { total, published, drafts, categories, tags, subscribers, messages },
+    recent: recent ?? [],
+  };
+}
+
+export async function adminListArticles() {
+  await requireAdmin();
+  const { data, error } = await db
+    .from("articles")
+    .select(
+      "id,title,slug,status,featured,popular,trending,updated_at,published_at,category:categories(id,name,slug)",
+    )
+    .order("updated_at", { ascending: false })
+    .limit(300);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function adminGetArticle({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { id } = idInput.parse(input);
+  const { data: article, error } = await db
+    .from("articles")
+    .select("*,article_tags(tag_id)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!article) return null;
+  return {
+    ...article,
+    tagIds: (article.article_tags ?? []).map((row: { tag_id: string }) => row.tag_id),
+  };
+}
+
+export async function adminSaveArticle({ data: input }: { data: unknown }) {
+  const userId = await requireAdmin();
+  const { id, tagIds, ...fields } = articleInput.parse(input);
+
+  let publishedAt: string | null | undefined;
+  if (fields.status === "published") {
+    const existing = id
+      ? await db.from("articles").select("published_at").eq("id", id).maybeSingle()
+      : null;
+    publishedAt = existing?.data?.published_at ?? new Date().toISOString();
+  }
+
+  const payload = {
+    ...fields,
+    author_id: userId,
+    ...(publishedAt !== undefined ? { published_at: publishedAt } : {}),
+  };
+
+  let articleId = id;
+  if (id) {
+    const { error } = await db.from("articles").update(payload).eq("id", id);
     if (error) throw new Error(error.message);
-    return data ?? [];
-  });
-
-export const adminGetArticle = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => idInput.parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { data: article, error } = await context.supabase
+  } else {
+    const { data: inserted, error } = await db
       .from("articles")
-      .select("*,article_tags(tag_id)")
-      .eq("id", data.id)
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    articleId = inserted.id;
+  }
+
+  await db.from("article_tags").delete().eq("article_id", articleId!);
+  if (tagIds.length > 0) {
+    await db
+      .from("article_tags")
+      .insert(tagIds.map((tagId) => ({ article_id: articleId!, tag_id: tagId })));
+  }
+
+  return { id: articleId! };
+}
+
+export async function adminSetArticleStatus({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const parsed = z
+    .object({ id: z.string().uuid(), status: z.enum(["draft", "published"]) })
+    .parse(input);
+
+  const patch: { status: "draft" | "published"; published_at?: string } = {
+    status: parsed.status,
+  };
+  if (parsed.status === "published") {
+    const { data: existing } = await db
+      .from("articles")
+      .select("published_at")
+      .eq("id", parsed.id)
       .maybeSingle();
+    patch.published_at = existing?.published_at ?? new Date().toISOString();
+  }
+  const { error } = await db.from("articles").update(patch).eq("id", parsed.id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
+
+export async function adminReorderCategories({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { order } = z
+    .object({
+      order: z
+        .array(z.object({ id: z.string().uuid(), sort_order: z.number().int().min(0).max(999) }))
+        .max(60),
+    })
+    .parse(input);
+
+  for (const row of order) {
+    const { error } = await db
+      .from("categories")
+      .update({ sort_order: row.sort_order })
+      .eq("id", row.id);
     if (error) throw new Error(error.message);
-    if (!article) return null;
-    return {
-      ...article,
-      tagIds: (article.article_tags ?? []).map((row: { tag_id: string }) => row.tag_id),
-    };
-  });
+  }
+  return { ok: true };
+}
 
-export const adminSaveArticle = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => articleInput.parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const supabase = context.supabase;
-    const { id, tagIds, ...fields } = data;
+export async function adminDeleteArticle({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { id } = idInput.parse(input);
+  const { error } = await db.from("articles").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
 
-    let publishedAt: string | null | undefined;
-    if (fields.status === "published") {
-      const existing = id
-        ? await supabase.from("articles").select("published_at").eq("id", id).maybeSingle()
-        : null;
-      publishedAt = existing?.data?.published_at ?? new Date().toISOString();
-    }
+export async function adminSaveCategory({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { id, ...fields } = categoryInput.parse(input);
+  const query = id
+    ? db.from("categories").update(fields).eq("id", id)
+    : db.from("categories").insert(fields);
+  const { error } = await query;
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
 
-    const payload = {
-      ...fields,
-      author_id: context.userId,
-      ...(publishedAt !== undefined ? { published_at: publishedAt } : {}),
-    };
+export async function adminDeleteCategory({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { id } = idInput.parse(input);
+  const { error } = await db.from("categories").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
 
-    let articleId = id;
-    if (id) {
-      const { error } = await supabase.from("articles").update(payload).eq("id", id);
-      if (error) throw new Error(error.message);
-    } else {
-      const { data: inserted, error } = await supabase
-        .from("articles")
-        .insert(payload)
-        .select("id")
-        .single();
-      if (error) throw new Error(error.message);
-      articleId = inserted.id;
-    }
+export async function adminSaveTag({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { id, ...fields } = tagInput.parse(input);
+  const query = id ? db.from("tags").update(fields).eq("id", id) : db.from("tags").insert(fields);
+  const { error } = await query;
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
 
-    await supabase.from("article_tags").delete().eq("article_id", articleId!);
-    if (tagIds.length > 0) {
-      await supabase
-        .from("article_tags")
-        .insert(tagIds.map((tagId) => ({ article_id: articleId!, tag_id: tagId })));
-    }
+export async function adminDeleteTag({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { id } = idInput.parse(input);
+  const { error } = await db.from("tags").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
 
-    return { id: articleId! };
-  });
+export async function adminListSubscribers() {
+  await requireAdmin();
+  const { data, error } = await db
+    .from("newsletter_subscribers")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(1000);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
 
-export const adminSetArticleStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({ id: z.string().uuid(), status: z.enum(["draft", "published"]) })
-      .parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const supabase = context.supabase;
-    const patch: { status: "draft" | "published"; published_at?: string } = {
-      status: data.status,
-    };
-    if (data.status === "published") {
-      const { data: existing } = await supabase
-        .from("articles")
-        .select("published_at")
-        .eq("id", data.id)
-        .maybeSingle();
-      patch.published_at = existing?.published_at ?? new Date().toISOString();
-    }
-    const { error } = await supabase.from("articles").update(patch).eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+export async function adminListMessages() {
+  await requireAdmin();
+  const { data, error } = await db
+    .from("contact_messages")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
 
-export const adminReorderCategories = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({
-        order: z
-          .array(z.object({ id: z.string().uuid(), sort_order: z.number().int().min(0).max(999) }))
-          .max(60),
-      })
-      .parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    for (const row of data.order) {
-      const { error } = await context.supabase
-        .from("categories")
-        .update({ sort_order: row.sort_order })
-        .eq("id", row.id);
-      if (error) throw new Error(error.message);
-    }
-    return { ok: true };
-  });
+export async function adminUpdateMessageStatus({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const parsed = z
+    .object({ id: z.string().uuid(), status: z.enum(["new", "handled"]) })
+    .parse(input);
+  const { error } = await db
+    .from("contact_messages")
+    .update({ status: parsed.status })
+    .eq("id", parsed.id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
 
-export const adminDeleteArticle = createServerFn({ method: "POST" })
+export async function adminSaveSettings({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { settings } = z
+    .object({ settings: z.record(z.string().max(60), z.string().trim().max(300)) })
+    .parse(input);
 
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => idInput.parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { error } = await context.supabase.from("articles").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+  const rows = Object.entries(settings).map(([key, value]) => ({
+    key,
+    value,
+    updated_at: new Date().toISOString(),
+  }));
+  const { error } = await db.from("site_settings").upsert(rows);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
 
-export const adminSaveCategory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => categoryInput.parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { id, ...fields } = data;
-    const query = id
-      ? context.supabase.from("categories").update(fields).eq("id", id)
-      : context.supabase.from("categories").insert(fields);
-    const { error } = await query;
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+export async function adminUploadImage({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const parsed = z
+    .object({
+      filename: z.string().trim().min(1).max(160),
+      contentType: z.string().trim().max(100),
+      dataBase64: z.string().max(14_000_000),
+    })
+    .parse(input);
 
-export const adminDeleteCategory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => idInput.parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { error } = await context.supabase.from("categories").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+  const binary = Uint8Array.from(atob(parsed.dataBase64), (char) => char.charCodeAt(0));
+  const safeName = parsed.filename.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+  const path = `${new Date().getFullYear()}/${crypto.randomUUID()}-${safeName}`;
 
-export const adminSaveTag = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => tagInput.parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { id, ...fields } = data;
-    const query = id
-      ? context.supabase.from("tags").update(fields).eq("id", id)
-      : context.supabase.from("tags").insert(fields);
-    const { error } = await query;
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+  const { error } = await supabase.storage
+    .from("article-images")
+    .upload(path, binary, { contentType: parsed.contentType || "image/jpeg", upsert: false });
 
-export const adminDeleteTag = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => idInput.parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { error } = await context.supabase.from("tags").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+  if (error) throw new Error(error.message);
+  return { url: publicImageUrl(path) };
+}
 
-export const adminListSubscribers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
-    const { data, error } = await context.supabase
-      .from("newsletter_subscribers")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1000);
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
+export async function adminListTaxonomy() {
+  await requireAdmin();
+  const [categories, tags] = await Promise.all([
+    db.from("categories").select("*").order("sort_order", { ascending: true }),
+    db.from("tags").select("*").order("name", { ascending: true }),
+  ]);
+  return { categories: categories.data ?? [], tags: tags.data ?? [] };
+}
 
-export const adminListMessages = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
-    const { data, error } = await context.supabase
-      .from("contact_messages")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
+export async function adminWhoAmI() {
+  const userId = await currentUserId();
+  return { userId, isAdmin: await isAdmin(userId) };
+}
 
-export const adminUpdateMessageStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ id: z.string().uuid(), status: z.enum(["new", "handled"]) }).parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { error } = await context.supabase
-      .from("contact_messages")
-      .update({ status: data.status })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+export async function adminListAdmins() {
+  const me = await requireAdmin();
+  const { data, error } = await db.rpc("list_admin_users");
+  if (error) throw new Error(error.message);
+  return {
+    admins: (data ?? []) as {
+      user_id: string;
+      email: string;
+      granted_at: string;
+      last_sign_in_at: string | null;
+    }[],
+    me,
+  };
+}
 
-export const adminSaveSettings = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({ settings: z.record(z.string().max(60), z.string().trim().max(300)) })
-      .parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const rows = Object.entries(data.settings).map(([key, value]) => ({
-      key,
-      value,
-      updated_at: new Date().toISOString(),
-    }));
-    const { error } = await context.supabase.from("site_settings").upsert(rows);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+export async function adminGrantAdmin({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { email } = z.object({ email: z.string().trim().email().max(255) }).parse(input);
+  const { data: result, error } = await db.rpc("grant_admin_by_email", { _email: email });
+  if (error) throw new Error(error.message);
+  return (result as { ok: boolean; message: string } | null) ?? {
+    ok: false,
+    message: "Unexpected error",
+  };
+}
 
-export const adminUploadImage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({
-        filename: z.string().trim().min(1).max(160),
-        contentType: z.string().trim().max(100),
-        dataBase64: z.string().max(14_000_000),
-      })
-      .parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-
-    const binary = Uint8Array.from(atob(data.dataBase64), (char) => char.charCodeAt(0));
-    const safeName = data.filename.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
-    const path = `${new Date().getFullYear()}/${crypto.randomUUID()}-${safeName}`;
-
-    const { error } = await context.supabase.storage
-      .from("article-images")
-      .upload(path, binary, { contentType: data.contentType || "image/jpeg", upsert: false });
-
-    if (error) throw new Error(error.message);
-    return { url: `/api/public/media/${path}` };
-  });
-
-export const adminListTaxonomy = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
-    const [categories, tags] = await Promise.all([
-      context.supabase.from("categories").select("*").order("sort_order", { ascending: true }),
-      context.supabase.from("tags").select("*").order("name", { ascending: true }),
-    ]);
-    return { categories: categories.data ?? [], tags: tags.data ?? [] };
-  });
-
-export const adminWhoAmI = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data } = await (
-      context.supabase as unknown as {
-        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: boolean | null }>;
-      }
-    ).rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    return { userId: context.userId, isAdmin: Boolean(data) };
-  });
-
-export const adminListAdmins = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
-    const { data, error } = await (
-      context.supabase as unknown as {
-        rpc: (fn: string) => Promise<{
-          data:
-            | {
-                user_id: string;
-                email: string;
-                granted_at: string;
-                last_sign_in_at: string | null;
-              }[]
-            | null;
-          error: { message: string } | null;
-        }>;
-      }
-    ).rpc("list_admin_users");
-    if (error) throw new Error(error.message);
-    return { admins: data ?? [], me: context.userId };
-  });
-
-export const adminGrantAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ email: z.string().trim().email().max(255) }).parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { data: result, error } = await (
-      context.supabase as unknown as {
-        rpc: (
-          fn: string,
-          args: Record<string, unknown>,
-        ) => Promise<{
-          data: { ok: boolean; message: string } | null;
-          error: { message: string } | null;
-        }>;
-      }
-    ).rpc("grant_admin_by_email", { _email: data.email });
-    if (error) throw new Error(error.message);
-    return result ?? { ok: false, message: "Unexpected error" };
-  });
-
-export const adminRevokeAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => idInput.parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { data: result, error } = await (
-      context.supabase as unknown as {
-        rpc: (
-          fn: string,
-          args: Record<string, unknown>,
-        ) => Promise<{
-          data: { ok: boolean; message: string } | null;
-          error: { message: string } | null;
-        }>;
-      }
-    ).rpc("revoke_admin", { _user_id: data.id });
-    if (error) throw new Error(error.message);
-    return result ?? { ok: false, message: "Unexpected error" };
-  });
+export async function adminRevokeAdmin({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { id } = idInput.parse(input);
+  const { data: result, error } = await db.rpc("revoke_admin", { _user_id: id });
+  if (error) throw new Error(error.message);
+  return (result as { ok: boolean; message: string } | null) ?? {
+    ok: false,
+    message: "Unexpected error",
+  };
+}
