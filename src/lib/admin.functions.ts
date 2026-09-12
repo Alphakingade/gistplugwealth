@@ -180,11 +180,17 @@ export async function adminSaveArticle({ data: input }: { data: unknown }) {
     articleId = inserted.id;
   }
 
-  await db.from("article_tags").delete().eq("article_id", articleId!);
+  const { error: clearError } = await db
+    .from("article_tags")
+    .delete()
+    .eq("article_id", articleId!);
+  if (clearError) throw new Error(`Could not update tags: ${clearError.message}`);
+
   if (tagIds.length > 0) {
-    await db
+    const { error: tagError } = await db
       .from("article_tags")
       .insert(tagIds.map((tagId) => ({ article_id: articleId!, tag_id: tagId })));
+    if (tagError) throw new Error(`Could not save tags: ${tagError.message}`);
   }
 
   return { id: articleId! };
@@ -327,23 +333,32 @@ export async function adminSaveSettings({ data: input }: { data: unknown }) {
   return { ok: true };
 }
 
-export async function adminUploadImage({ data: input }: { data: unknown }) {
-  await requireAdmin();
-  const parsed = z
-    .object({
-      filename: z.string().trim().min(1).max(160),
-      contentType: z.string().trim().max(100),
-      dataBase64: z.string().max(14_000_000),
-    })
-    .parse(input);
+/** Largest image the editor will accept, in bytes. */
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
-  const binary = Uint8Array.from(atob(parsed.dataBase64), (char) => char.charCodeAt(0));
-  const safeName = parsed.filename.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+/**
+ * Uploads the picked file straight from the browser to the images bucket.
+ * Storage rules allow writes only for accounts holding the admin role.
+ */
+export async function adminUploadImage({ data }: { data: { file: File } }) {
+  await requireAdmin();
+  const file = data?.file;
+  if (!file) throw new Error("No file selected.");
+
+  if (!file.type.startsWith("image/")) {
+    throw new Error("That file is not an image. Choose a JPG, PNG or WebP.");
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    const mb = (file.size / (1024 * 1024)).toFixed(1);
+    throw new Error(`That image is ${mb} MB. Please keep images under 10 MB.`);
+  }
+
+  const safeName = (file.name || "image.jpg").toLowerCase().replace(/[^a-z0-9.]+/g, "-");
   const path = `${new Date().getFullYear()}/${crypto.randomUUID()}-${safeName}`;
 
   const { error } = await supabase.storage
     .from("article-images")
-    .upload(path, binary, { contentType: parsed.contentType || "image/jpeg", upsert: false });
+    .upload(path, file, { contentType: file.type || "image/jpeg", upsert: false });
 
   if (error) throw new Error(error.message);
   return { url: publicImageUrl(path) };
