@@ -180,11 +180,17 @@ export async function adminSaveArticle({ data: input }: { data: unknown }) {
     articleId = inserted.id;
   }
 
-  await db.from("article_tags").delete().eq("article_id", articleId!);
+  const { error: clearError } = await db
+    .from("article_tags")
+    .delete()
+    .eq("article_id", articleId!);
+  if (clearError) throw new Error(`Could not update tags: ${clearError.message}`);
+
   if (tagIds.length > 0) {
-    await db
+    const { error: tagError } = await db
       .from("article_tags")
       .insert(tagIds.map((tagId) => ({ article_id: articleId!, tag_id: tagId })));
+    if (tagError) throw new Error(`Could not save tags: ${tagError.message}`);
   }
 
   return { id: articleId! };
