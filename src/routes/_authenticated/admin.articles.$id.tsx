@@ -133,34 +133,23 @@ function ArticleEditor() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) =>
-      new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = () => reject(new Error("Could not read file"));
-        reader.onload = async () => {
-          try {
-            const base64 = String(reader.result).split(",")[1] ?? "";
-            const result = await upload({
-              data: { filename: file.name, contentType: file.type, dataBase64: base64 },
-            });
-            resolve(result.url);
-          } catch (uploadError) {
-            reject(uploadError);
-          }
-        };
-        reader.readAsDataURL(file);
-      }),
-    onSuccess: (url) =>
-      setForm((prev) => ({
-        ...prev,
-        featured_image: url,
-      })),
-    onError: () => setError("Image upload failed. Try a smaller file (under ~10 MB)."),
+    mutationFn: async (file: File) => {
+      const result = await upload({ data: { file } });
+      return result.url;
+    },
+    onSuccess: (url) => {
+      setError(null);
+      setForm((prev) => ({ ...prev, featured_image: url }));
+    },
+    onError: (err) =>
+      setError(err instanceof Error ? err.message : "Image upload failed. Please try again."),
   });
 
   function onPickImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    setError(null);
     if (file) uploadMutation.mutate(file);
+    event.target.value = "";
   }
 
   function applyTool(before: string, after: string, sample: string) {
