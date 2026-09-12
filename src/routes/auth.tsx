@@ -36,15 +36,57 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/admin", replace: true });
-    });
+    let cancelled = false;
+
+    async function completeSignIn() {
+      const params = new URLSearchParams(window.location.search);
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+
+      // The provider reports failures on the way back — surface them instead
+      // of silently showing an empty sign-in form.
+      const providerError =
+        params.get("error_description") ??
+        params.get("error") ??
+        hash.get("error_description") ??
+        hash.get("error");
+
+      const code = params.get("code");
+
+      if (code) {
+        setLoading(true);
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        // Clean the one-time code out of the address bar either way.
+        window.history.replaceState({}, "", window.location.pathname);
+        setLoading(false);
+        if (exchangeError) {
+          if (!cancelled) setError(`Could not finish sign-in: ${exchangeError.message}`);
+          return;
+        }
+        if (!cancelled) navigate({ to: "/admin", replace: true });
+        return;
+      }
+
+      if (providerError) {
+        window.history.replaceState({}, "", window.location.pathname);
+        if (!cancelled) setError(providerError);
+        return;
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (data.session && !cancelled) navigate({ to: "/admin", replace: true });
+    }
+
+    void completeSignIn();
+
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
         navigate({ to: "/admin", replace: true });
       }
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {

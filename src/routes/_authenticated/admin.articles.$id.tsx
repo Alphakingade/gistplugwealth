@@ -12,6 +12,7 @@ import {
   adminUploadImage,
 } from "@/lib/admin.functions";
 import { slugify } from "@/lib/site";
+import { resolveImageUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/_authenticated/admin/articles/$id")({
   component: ArticleEditor,
@@ -363,7 +364,7 @@ function ArticleEditor() {
           <h2 className="text-lg">Featured image</h2>
           {form.featured_image ? (
             <img
-              src={form.featured_image}
+              src={resolveImageUrl(form.featured_image) ?? undefined}
               alt="Featured"
               className="mt-3 aspect-[3/2] w-full rounded-md object-cover"
             />
