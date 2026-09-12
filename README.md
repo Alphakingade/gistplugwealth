@@ -87,14 +87,6 @@ authentication settings to confirm.
 
 ---
 
-## Admin access
-
-Sign in at `/auth`, then open `/admin`. The site owner accounts
-(`dadebimpe46@gmail.com`, `gistplugwealth@gmail.com`) receive admin rights
-automatically on sign-up; everyone else is granted access by an existing admin
-from **Admin → Admin team**.
-
----
 
 ## Disclaimer
 
