@@ -11,7 +11,7 @@ const STATIC_PATHS = [
   "/disclaimer",
 ];
 
-const BASE_URL = "https://gistplugwealth-demo1.lovable.app";
+const BASE_URL = "https://gistplugwealth.com.ng";
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
