@@ -14,12 +14,12 @@
 
 
 ## Static hosting (QServers cPanel) + production fixes
-- [ ] Browser-only data layer (no server functions)
-- [ ] Direct public storage image URLs + storage RLS policies
-- [ ] STATIC_BUILD vite config, finalize-static.mjs, .htaccess SPA fallback
-- [ ] GitHub Actions FTP deploy workflow
-- [ ] Google OAuth PKCE code exchange on /auth (custom domain)
-- [ ] Direct File/Blob image upload with real error messages
-- [ ] Article save/publish + article_tags errors surfaced
+- [x] Browser-only data layer (no server functions)
+- [x] Direct public storage image URLs + storage RLS policies
+- [x] STATIC_BUILD vite config, finalize-static.mjs, .htaccess SPA fallback
+- [x] GitHub Actions FTP deploy workflow
+- [x] Google OAuth PKCE code exchange on /auth (custom domain)
+- [x] Direct File/Blob image upload with real error messages
+- [x] Article save/publish + article_tags errors surfaced
 - [ ] Admin allowlist trigger (dadebimpe46@, gistplugwealth@) + backfill
-- [ ] DEPLOY.md and README.md rewrite
+- [x] DEPLOY.md and README.md rewrite

@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+
 import { Logo } from "@/components/site/Logo";
 
 const schema = z.object({
@@ -120,24 +120,28 @@ function AuthPage() {
 
   async function signInWithGoogle() {
     setError(null);
-    // Lovable-managed Google sign-in only works on Lovable-hosted origins.
-    // On any other host (e.g. a custom/Vercel domain) fall back to the
-    // backend's own Google provider so the flow still completes.
+    setLoading(true);
+    // Go straight to the backend's Google provider. The callback lands back on
+    // this page (/auth) with a one-time code, which the effect above exchanges
+    // for a session. Using the current origin keeps local development working
+    // and resolves to https://gistplugwealth.com.ng/auth in production.
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth`,
+          queryParams: { prompt: "select_account" },
+        },
       });
-      if (!result.error) return;
-    } catch {
-      /* fall through to the direct provider */
-    }
-
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth` },
-    });
-    if (oauthError) {
-      setError(`Google sign-in failed: ${oauthError.message}`);
+      if (oauthError) {
+        setError(`Google sign-in failed: ${oauthError.message}`);
+        setLoading(false);
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? `Google sign-in failed: ${err.message}` : "Google sign-in failed.",
+      );
+      setLoading(false);
     }
   }
 

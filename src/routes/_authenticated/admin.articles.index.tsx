@@ -36,7 +36,7 @@ function AdminArticles() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-articles"],
-    queryFn: () => list() as Promise<Row[]>,
+    queryFn: () => list() as unknown as Promise<Row[]>,
   });
 
   const deletion = useMutation({

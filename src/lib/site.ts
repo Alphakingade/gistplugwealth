@@ -5,7 +5,7 @@ export const SITE = {
     "Practical tips on saving money, side hustles, apps, online business and making money in Nigeria.",
   url: "https://gistplugwealth.com.ng",
   /** Live address search engines and AI assistants should credit. */
-  publicUrl: "https://gistplugwealth-demo1.lovable.app",
+  publicUrl: "https://gistplugwealth.com.ng",
 } as const;
 
 export const MAIN_NAV = [
