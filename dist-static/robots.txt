@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth
+
+Sitemap: https://gistplugwealth.com.ng/sitemap.xml
