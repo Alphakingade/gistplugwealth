@@ -124,14 +124,26 @@ function ArticleEditor() {
 
   const saveMutation = useMutation({
     mutationFn: (payload: Record<string, unknown>) => save({ data: payload as never }),
-    onSuccess: (result) => {
+    onSuccess: (result: { id: string }, variables) => {
+      const nextStatus = (variables as { status: "draft" | "published" }).status;
       queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
-      navigate({ to: "/admin/articles" });
+      setError(null);
+      setForm((prev) => ({ ...prev, status: nextStatus }));
+      setSaved(nextStatus === "published" ? "Saved and published." : "Saved as draft.");
+      if (isNew && result?.id) {
+        navigate({ to: "/admin/articles/$id", params: { id: result.id } });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["admin-article", id] });
+      }
       return result;
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Save failed"),
+    onError: (err) => {
+      setSaved(null);
+      setError(err instanceof Error ? err.message : "Save failed");
+    },
   });
+
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
