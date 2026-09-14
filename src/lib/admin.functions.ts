@@ -119,18 +119,181 @@ export async function getAdminOverview() {
   };
 }
 
-export async function adminListArticles() {
+export type AdminArticleRow = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  featured_image: string | null;
+  author_name: string;
+  status: "draft" | "published";
+  featured: boolean;
+  popular: boolean;
+  trending: boolean;
+  read_minutes: number;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+  category: { id: string; name: string; slug: string } | null;
+};
+
+export async function adminListArticles(): Promise<AdminArticleRow[]> {
   await requireAdmin();
   const { data, error } = await db
     .from("articles")
     .select(
-      "id,title,slug,status,featured,popular,trending,updated_at,published_at,category:categories(id,name,slug)",
+      "id,title,slug,excerpt,featured_image,author_name,status,featured,popular,trending,read_minutes,created_at,updated_at,published_at,category:categories(id,name,slug)",
     )
     .order("updated_at", { ascending: false })
-    .limit(300);
+    .limit(1000);
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []).map((row: Record<string, unknown>) => ({
+    ...row,
+    category: Array.isArray(row.category) ? (row.category[0] ?? null) : (row.category ?? null),
+  })) as AdminArticleRow[];
 }
+
+/** Toggles one or more of the featured/popular/trending flags on an article. */
+export async function adminSetArticleFlags({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const parsed = z
+    .object({
+      id: z.string().uuid(),
+      featured: z.boolean().optional(),
+      popular: z.boolean().optional(),
+      trending: z.boolean().optional(),
+    })
+    .parse(input);
+  const { id, ...patch } = parsed;
+  if (Object.keys(patch).length === 0) return { ok: true };
+  const { error } = await db.from("articles").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
+
+/** Copies an existing article (and its tags) into a fresh draft. */
+export async function adminDuplicateArticle({ data: input }: { data: unknown }) {
+  const userId = await requireAdmin();
+  const { id } = idInput.parse(input);
+
+  const { data: source, error } = await db
+    .from("articles")
+    .select("*,article_tags(tag_id)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!source) throw new Error("That article no longer exists.");
+
+  const tagIds: string[] = (source.article_tags ?? []).map((row: { tag_id: string }) => row.tag_id);
+  const base = `${String(source.slug).slice(0, 180)}-copy`;
+  let slug = base;
+  for (let attempt = 2; attempt <= 30; attempt += 1) {
+    const { data: clash } = await db.from("articles").select("id").eq("slug", slug).maybeSingle();
+    if (!clash) break;
+    slug = `${base}-${attempt}`;
+  }
+
+  const payload = {
+    title: `${source.title} (copy)`,
+    slug,
+    excerpt: source.excerpt,
+    content: source.content,
+    featured_image: source.featured_image,
+    category_id: source.category_id,
+    author_name: source.author_name,
+    author_id: userId,
+    status: "draft" as const,
+    featured: false,
+    popular: false,
+    trending: false,
+    read_minutes: source.read_minutes,
+    seo_title: source.seo_title,
+    seo_description: source.seo_description,
+    published_at: null,
+  };
+
+  const { data: inserted, error: insertError } = await db
+    .from("articles")
+    .insert(payload)
+    .select("id")
+    .single();
+  if (insertError) throw new Error(insertError.message);
+
+  if (tagIds.length > 0) {
+    const { error: tagError } = await db
+      .from("article_tags")
+      .insert(tagIds.map((tagId) => ({ article_id: inserted.id, tag_id: tagId })));
+    if (tagError) throw new Error(`Copied, but tags failed: ${tagError.message}`);
+  }
+  return { id: inserted.id as string };
+}
+
+/** Applies one action to many selected articles. */
+export async function adminBulkArticles({ data: input }: { data: unknown }) {
+  await requireAdmin();
+  const { ids, action } = z
+    .object({
+      ids: z.array(z.string().uuid()).min(1).max(200),
+      action: z.enum([
+        "publish",
+        "draft",
+        "delete",
+        "feature",
+        "unfeature",
+        "popular",
+        "unpopular",
+        "trending",
+        "untrending",
+      ]),
+    })
+    .parse(input);
+
+  if (action === "delete") {
+    const { error } = await db.from("articles").delete().in("id", ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count: ids.length };
+  }
+
+  if (action === "publish") {
+    const stamp = new Date().toISOString();
+    const { data: rows } = await db
+      .from("articles")
+      .select("id,published_at")
+      .in("id", ids)
+      .is("published_at", null);
+    const needStamp = (rows ?? []).map((row: { id: string }) => row.id);
+    const { error } = await db.from("articles").update({ status: "published" }).in("id", ids);
+    if (error) throw new Error(error.message);
+    if (needStamp.length > 0) {
+      const { error: stampError } = await db
+        .from("articles")
+        .update({ published_at: stamp })
+        .in("id", needStamp);
+      if (stampError) throw new Error(stampError.message);
+    }
+    return { ok: true, count: ids.length };
+  }
+
+  const patch: Record<string, unknown> =
+    action === "draft"
+      ? { status: "draft" }
+      : action === "feature"
+        ? { featured: true }
+        : action === "unfeature"
+          ? { featured: false }
+          : action === "popular"
+            ? { popular: true }
+            : action === "unpopular"
+              ? { popular: false }
+              : action === "trending"
+                ? { trending: true }
+                : { trending: false };
+
+  const { error } = await db.from("articles").update(patch).in("id", ids);
+  if (error) throw new Error(error.message);
+  return { ok: true, count: ids.length };
+}
+
 
 export async function adminGetArticle({ data: input }: { data: unknown }) {
   await requireAdmin();
