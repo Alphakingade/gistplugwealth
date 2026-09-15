@@ -83,6 +83,7 @@ function ArticleEditor() {
   const [showPreview, setShowPreview] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
 
   const articleQuery = useQuery({
     queryKey: ["admin-article", id],
@@ -124,6 +125,10 @@ function ArticleEditor() {
 
   const saveMutation = useMutation({
     mutationFn: (payload: Record<string, unknown>) => save({ data: payload as never }),
+    onMutate: () => {
+      setSaved(null);
+      setError(null);
+    },
     onSuccess: (result: { id: string }, variables) => {
       const nextStatus = (variables as { status: "draft" | "published" }).status;
       queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
@@ -323,6 +328,16 @@ function ArticleEditor() {
         {error ? (
           <p role="alert" className="text-sm text-destructive">
             {error}
+          </p>
+        ) : null}
+
+        {saved && !error ? (
+          <p
+            role="status"
+            data-testid="save-confirmation"
+            className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary"
+          >
+            {saved}
           </p>
         ) : null}
 
