@@ -147,10 +147,13 @@ export async function adminListArticles(): Promise<AdminArticleRow[]> {
     .order("updated_at", { ascending: false })
     .limit(1000);
   if (error) throw new Error(error.message);
-  return (data ?? []).map((row: Record<string, unknown>) => ({
-    ...row,
-    category: Array.isArray(row.category) ? (row.category[0] ?? null) : (row.category ?? null),
-  })) as AdminArticleRow[];
+  return (data ?? []).map((row: Record<string, unknown>) => {
+    const cat = row["category"];
+    return {
+      ...row,
+      category: Array.isArray(cat) ? (cat[0] ?? null) : (cat ?? null),
+    };
+  }) as AdminArticleRow[];
 }
 
 /** Toggles one or more of the featured/popular/trending flags on an article. */
