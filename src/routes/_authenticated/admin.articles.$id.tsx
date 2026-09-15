@@ -83,6 +83,7 @@ function ArticleEditor() {
   const [showPreview, setShowPreview] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
 
   const articleQuery = useQuery({
     queryKey: ["admin-article", id],
