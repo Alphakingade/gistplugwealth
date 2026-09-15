@@ -125,6 +125,10 @@ function ArticleEditor() {
 
   const saveMutation = useMutation({
     mutationFn: (payload: Record<string, unknown>) => save({ data: payload as never }),
+    onMutate: () => {
+      setSaved(null);
+      setError(null);
+    },
     onSuccess: (result: { id: string }, variables) => {
       const nextStatus = (variables as { status: "draft" | "published" }).status;
       queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
