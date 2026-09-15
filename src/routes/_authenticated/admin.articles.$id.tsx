@@ -327,6 +327,16 @@ function ArticleEditor() {
           </p>
         ) : null}
 
+        {saved && !error ? (
+          <p
+            role="status"
+            data-testid="save-confirmation"
+            className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary"
+          >
+            {saved}
+          </p>
+        ) : null}
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
